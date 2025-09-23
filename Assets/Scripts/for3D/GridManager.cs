@@ -96,7 +96,7 @@ public class GridManager : MonoBehaviour
 
                 if (col == 0)
                 {
-                    tile.name = $"Row{rows-row}_Start";
+                    tile.name = $"Row{rows - row}_Start";
                     tile.GetComponent<Outline>().effectColor = Color.red;
                 }
                 else if (col == columns - 1)
@@ -107,7 +107,26 @@ public class GridManager : MonoBehaviour
                 else
                 {
                     tile.name = $"Row{rows - row}_Tile{col}";
-                    tile.AddComponent<XRGrabInteractable>();
+
+                    // Configurazione XRGrabInteractable per movimento vincolato
+                    XRGrabInteractable tileInteractable = tile.GetComponent<XRGrabInteractable>();
+                    if (tileInteractable == null)
+                    {
+                        tileInteractable = tile.AddComponent<XRGrabInteractable>();
+                    }
+
+                    // Usa Kinematic per movimento più diretto e veloce
+                    tileInteractable.movementType = XRBaseInteractable.MovementType.Instantaneous;
+
+                    // Disabilita tracking di rotazione e scala
+                    tileInteractable.trackRotation = false;
+                    tileInteractable.trackScale = false;
+                    tileInteractable.trackPosition = true;
+
+                    // Disabilita smoothing per movimento più reattivo
+                    tileInteractable.smoothPosition = false;
+                    tileInteractable.smoothRotation = false;
+
                     // Aggiungi la tile alla riga corrispondente (solo quelle che possono essere mescolate)
                     tilesByRow[row].Add(tile);
                 }
@@ -140,6 +159,82 @@ public class GridManager : MonoBehaviour
                 // Scambia anche gli elementi nella lista
                 (rowTiles[i], rowTiles[randIndex]) = (rowTiles[randIndex], rowTiles[i]);
             }
+        }
+    }
+}
+
+// Componente aggiuntivo per vincolare il movimento
+public class ConstrainedMovement : MonoBehaviour
+{
+    private Vector3 originalPosition;
+    private int rowIndex;
+    private XRGrabInteractable grabInteractable;
+
+    public void Initialize(Vector3 originalPos, int row)
+    {
+        originalPosition = originalPos;
+        rowIndex = row;
+        grabInteractable = GetComponent<XRGrabInteractable>();
+
+        // Sottoscrivi agli eventi di grab
+        grabInteractable.selectEntered.AddListener(OnGrabStart);
+        grabInteractable.selectExited.AddListener(OnGrabEnd);
+    }
+
+    private void OnGrabStart(SelectEnterEventArgs args)
+    {
+        // Salva la posizione corrente come riferimento
+        originalPosition = transform.localPosition;
+    }
+
+    private void OnGrabEnd(SelectExitEventArgs args)
+    {
+        // Opzionale: snap alla posizione più vicina nella griglia
+        SnapToGrid();
+    }
+
+    private void Update()
+    {
+        // Se l'oggetto è grabbato, vincola il movimento
+        if (grabInteractable.isSelected)
+        {
+            Vector3 currentPos = transform.localPosition;
+
+            // Mantieni solo il movimento sull'asse X, blocca Y e Z
+            transform.localPosition = new Vector3(
+                currentPos.x,
+                originalPosition.y,
+                originalPosition.z
+            );
+        }
+    }
+
+    private void SnapToGrid()
+    {
+        // Opzionale: snap alla posizione della griglia più vicina
+        float spacing = 0.3f; // Usa lo stesso spacing del GridManager
+        Vector3 currentPos = transform.localPosition;
+
+        // Calcola la colonna più vicina
+        int nearestCol = Mathf.RoundToInt(currentPos.x / spacing);
+
+        // Limita alle colonne valide (escludi inizio e fine)
+        nearestCol = Mathf.Clamp(nearestCol, 1, 8); // Assumendo 5 colonne totali (indici 1-3 per quelle mobili)
+
+        // Snap alla posizione
+        transform.localPosition = new Vector3(
+            nearestCol * spacing,
+            originalPosition.y,
+            originalPosition.z
+        );
+    }
+
+    private void OnDestroy()
+    {
+        if (grabInteractable != null)
+        {
+            grabInteractable.selectEntered.RemoveListener(OnGrabStart);
+            grabInteractable.selectExited.RemoveListener(OnGrabEnd);
         }
     }
 }

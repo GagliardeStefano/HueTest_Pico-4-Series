@@ -6,10 +6,10 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 0
-    path: Assets/Scenes/SampleScene.unity
+    path: Assets/Scenes/CanvasScene.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   - enabled: 1
-    path: Assets/Scenes/3Dscene.unity
+    path: Assets/Scenes/TestScene.unity
     guid: 297e3de40a56c8648abe4588ed2163d5
   m_configObjects:
     Unity.XR.PXR.Settings: {fileID: 11400000, guid: 0efea6efd66f598408402cb531143f93, type: 2}
