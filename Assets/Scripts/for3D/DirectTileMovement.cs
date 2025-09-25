@@ -86,19 +86,6 @@ public class DirectTileMovement : MonoBehaviour
         }
     }
 
-    private Transform FindRowDelimiter(string delimiterName)
-    {
-        // Cerca tra tutti i figli del GridManager
-        foreach (Transform child in gridParent)
-        {
-            if (child.name == delimiterName)
-            {
-                return child;
-            }
-        }
-        return null;
-    }
-
     private void SnapToGrid()
     {
         Vector3 localPos = transform.localPosition;

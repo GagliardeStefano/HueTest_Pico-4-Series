@@ -258,9 +258,9 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.xr.picoxr": {
-      "version": "file:C:/Users/stefa/Downloads/PICO Unity Integration SDK-3.3.0-20250917",
+      "version": "file:PICO Unity Integration SDK-3.3.0-20250917",
       "depth": 0,
-      "source": "local",
+      "source": "embedded",
       "dependencies": {
         "com.unity.xr.management": "4.0.0",
         "com.unity.xr.interaction.toolkit": "2.0.0",
