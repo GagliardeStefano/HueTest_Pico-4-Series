@@ -1450,7 +1450,6 @@ GameObject:
   m_Component:
   - component: {fileID: 520812007}
   - component: {fileID: 520812006}
-  - component: {fileID: 520812008}
   - component: {fileID: 520812009}
   m_Layer: 0
   m_Name: EventSystem
@@ -1489,37 +1488,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &520812008
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 520812004}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SendPointerHoverToParent: 1
-  m_MoveRepeatDelay: 0.5
-  m_MoveRepeatRate: 0.1
-  m_XRTrackingOrigin: {fileID: 0}
-  m_ActionsAsset: {fileID: 0}
-  m_PointAction: {fileID: 0}
-  m_MoveAction: {fileID: 0}
-  m_SubmitAction: {fileID: 0}
-  m_CancelAction: {fileID: 0}
-  m_LeftClickAction: {fileID: 0}
-  m_MiddleClickAction: {fileID: 0}
-  m_RightClickAction: {fileID: 0}
-  m_ScrollWheelAction: {fileID: 0}
-  m_TrackedDevicePositionAction: {fileID: 0}
-  m_TrackedDeviceOrientationAction: {fileID: 0}
-  m_DeselectOnBackgroundClick: 1
-  m_PointerBehavior: 0
-  m_CursorLockBehavior: 0
-  m_ScrollDeltaPerTick: 6
 --- !u!114 &520812009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1694,65 +1662,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 664917162}
   m_CullTransparentMesh: 1
---- !u!1 &767458234
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 767458236}
-  - component: {fileID: 767458237}
-  m_Layer: 0
-  m_Name: UIManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &767458236
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 767458234}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.33530816, y: 1.199039, z: -0.14552118}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &767458237
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 767458234}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ae976dad5a216964d97e8b1baa9e5ba8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  reportText: {fileID: 0}
-  axisColorRG: {r: 0.9, g: 0.23, b: 0.2, a: 1}
-  axisColorBY: {r: 0.2, g: 0.6, b: 0.9, a: 1}
-  axisColorNeutral: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  summaryColor: {r: 0, g: 0, b: 0, a: 1}
-  Pages:
-  - pageName: intro
-    sections: 0000000001000000
-    customText: 
-  - pageName: tasselli
-    sections: 02000000
-    customText: 
-  - pageName: problemi principali
-    sections: 03000000
-    customText: 
 --- !u!1 &839242654
 GameObject:
   m_ObjectHideFlags: 0
@@ -2849,7 +2758,6 @@ SceneRoots:
   m_Roots:
   - {fileID: 1911783206}
   - {fileID: 1939538530}
-  - {fileID: 767458236}
   - {fileID: 520812007}
   - {fileID: 1999223813}
   - {fileID: 1862598227}

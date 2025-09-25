@@ -1241,6 +1241,65 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 754723175}
   m_CullTransparentMesh: 1
+--- !u!1 &767458234
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 767458236}
+  - component: {fileID: 767458237}
+  m_Layer: 0
+  m_Name: UIManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &767458236
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 767458234}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.33530816, y: 1.199039, z: -0.14552118}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &767458237
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 767458234}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae976dad5a216964d97e8b1baa9e5ba8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  reportText: {fileID: 547644775}
+  axisColorRG: {r: 0.9, g: 0.23, b: 0.2, a: 1}
+  axisColorBY: {r: 0.2, g: 0.6, b: 0.9, a: 1}
+  axisColorNeutral: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  summaryColor: {r: 0, g: 0, b: 0, a: 1}
+  Pages:
+  - pageName: intro
+    sections: 0000000001000000
+    customText: 
+  - pageName: tasselli
+    sections: 02000000
+    customText: 
+  - pageName: problemi principali
+    sections: 03000000
+    customText: 
 --- !u!1 &771025469
 GameObject:
   m_ObjectHideFlags: 0
@@ -3032,3 +3091,4 @@ SceneRoots:
   - {fileID: 553175096}
   - {fileID: 2124734640}
   - {fileID: 1447919661}
+  - {fileID: 767458236}
