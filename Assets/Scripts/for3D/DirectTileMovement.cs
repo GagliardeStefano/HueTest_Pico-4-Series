@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 
 public class DirectTileMovement : MonoBehaviour
 {
+    private GridManager gridManager;
     private Vector3 startTileLocalPosition;
     private Vector3 startControllerWorldPosition;
     private XRGrabInteractable grabInteractable;
@@ -22,8 +24,9 @@ public class DirectTileMovement : MonoBehaviour
     {
         grabInteractable = GetComponent<XRGrabInteractable>();
         gridParent = transform.parent; // Il GridManager
-        // Calcola i limiti di movimento per questa riga
+        gridManager = gridParent.GetComponent<GridManager>();
 
+       
         // IMPORTANTE: Disabilita completamente il movimento automatico
         grabInteractable.movementType = XRBaseInteractable.MovementType.Kinematic;
         grabInteractable.trackPosition = false;
@@ -57,9 +60,8 @@ public class DirectTileMovement : MonoBehaviour
         isGrabbed = false;
         controllerTransform = null;
 
-        // NON fare snap automatico, lascia il tassello dove è stato rilasciato
-        // Se vuoi comunque uno snap, decommentalo:
-        // SnapToGrid();
+        // Trova e scambia con il cubo movibile più vicino
+        SwapWithNearestTile();
     }
 
     void Update()
@@ -78,7 +80,7 @@ public class DirectTileMovement : MonoBehaviour
             // Applica solo il movimento sull'asse X locale
             Vector3 newLocalPosition = startTileLocalPosition + new Vector3(amplifiedMovement.x, 0, 0);
 
-            // Opzionale: Limita il movimento all'interno della griglia
+            // Limita il movimento all'interno della griglia
             newLocalPosition.x = Mathf.Clamp(newLocalPosition.x, minX, maxX);
 
             // Imposta la posizione locale
@@ -86,20 +88,59 @@ public class DirectTileMovement : MonoBehaviour
         }
     }
 
-    private void SnapToGrid()
+    private void SwapWithNearestTile()
     {
-        Vector3 localPos = transform.localPosition;
+        Vector3 currentPos = transform.localPosition;
+        GameObject nearestTile = null;
+        float shortestDistance = float.MaxValue;
 
-        // Trova la colonna più vicina
-        int nearestCol = Mathf.RoundToInt(localPos.x / spacing);
-        nearestCol = Mathf.Clamp(nearestCol, 1, 8); // Limita alle colonne mobili
+        // Cerca tutti i cubi movibili nella stessa riga
+        DirectTileMovement[] allMovableTiles = gridParent.GetComponentsInChildren<DirectTileMovement>();
 
-        // Snap alla posizione della griglia
-        transform.localPosition = new Vector3(
-            nearestCol * spacing,
-            localPos.y,
-            localPos.z
-        );
+        foreach (DirectTileMovement tileMovement in allMovableTiles)
+        {
+            GameObject otherTile = tileMovement.gameObject;
+
+            // Salta se è lo stesso cubo
+            if (otherTile == gameObject) continue;
+
+            Vector3 otherPos = otherTile.transform.localPosition;
+
+            // Controlla se è nella stessa riga (stesso Z)
+            if (Mathf.Approximately(otherPos.z, currentPos.z))
+            {
+                float distance = Mathf.Abs(currentPos.x - otherPos.x);
+
+                if (distance < shortestDistance)
+                {
+                    shortestDistance = distance;
+                    nearestTile = otherTile;
+                }
+            }
+        }
+
+        // Se hai trovato un cubo vicino, scambia le posizioni
+        if (nearestTile != null)
+        {
+            Dictionary<string, Vector3> movablePositions = gridManager.InitialTilePositions;
+
+            Vector3 myPos = movablePositions.GetValueOrDefault(this.name);
+
+            Vector3 nearestPos = movablePositions.GetValueOrDefault(nearestTile.name);
+
+            // Scambia le posizioni
+            transform.localPosition = nearestPos;
+            nearestTile.transform.localPosition = myPos;
+
+            // Aggiorna le posizioni nel dizionario del GridManager
+            movablePositions[this.name] = nearestPos;
+            movablePositions[nearestTile.name] = myPos;
+        }
+        else
+        {
+            // Se non trova nessun cubo vicino, torna alla posizione di partenza
+            transform.localPosition = startTileLocalPosition;
+        }
     }
 
     void OnDestroy()

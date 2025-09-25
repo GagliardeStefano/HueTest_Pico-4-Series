@@ -49,10 +49,13 @@ public class GridManager : MonoBehaviour
         new Color32(162,137,70,255), new Color32(157,142,72,255)
     };
 
+    public Dictionary<string, Vector3> InitialTilePositions;
+
     void Start()
     {
         GenerateGrid();
         ShuffleTilesByRow();
+        InitialTilePositions = GetMovableTilePositions();
     }
 
     void GenerateGrid()
@@ -154,6 +157,22 @@ public class GridManager : MonoBehaviour
             }
         }
     }
+
+    private Dictionary<string, Vector3> GetMovableTilePositions()
+    {
+        Dictionary<string, Vector3> movableTilePositions = new Dictionary<string, Vector3>();
+
+        // Ottieni tutti i componenti DirectTileMovement (solo cubi movibili)
+        DirectTileMovement[] movableTiles = GetComponentsInChildren<DirectTileMovement>();
+
+        foreach (DirectTileMovement tileMovement in movableTiles)
+        {
+            GameObject tile = tileMovement.gameObject;
+            movableTilePositions[tile.name] = tile.transform.localPosition;
+        }
+
+        return movableTilePositions;
+    }
 }
 
 // Componente aggiuntivo per vincolare il movimento
@@ -230,4 +249,5 @@ public class ConstrainedMovement : MonoBehaviour
             grabInteractable.selectExited.RemoveListener(OnGrabEnd);
         }
     }
+ 
 }
