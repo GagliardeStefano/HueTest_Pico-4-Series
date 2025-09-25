@@ -43,9 +43,9 @@ MonoBehaviour:
   handTrackingSupportType: 0
   arFoundation: 0
   mrSafeguard: 0
-  enableRecommendMSAA: 1
+  enableRecommendMSAA: 0
   recommendSubsamping: 0
-  recommendMSAA: 1
+  recommendMSAA: 0
   validationFFREnabled: 0
   validationETFREnabled: 0
   portalInited: 1

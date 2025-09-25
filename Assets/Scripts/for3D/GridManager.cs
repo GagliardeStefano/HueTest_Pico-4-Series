@@ -59,7 +59,7 @@ public class GridManager : MonoBehaviour
     {
         if (cubePrefab == null)
         {
-            Debug.LogError("⚠ Nessun prefab assegnato al CubeGridManager!");
+            Debug.LogError("Nessun prefab assegnato al CubeGridManager!");
             return;
         }
 
@@ -108,26 +108,19 @@ public class GridManager : MonoBehaviour
                 {
                     tile.name = $"Row{rows - row}_Tile{col}";
 
-                    // Configurazione XRGrabInteractable per movimento vincolato
+                    // Aggiungi il componente di movimento diretto
+                    tile.AddComponent<DirectTileMovement>();
+
+                    // Assicurati che ci sia un XRGrabInteractable
                     XRGrabInteractable tileInteractable = tile.GetComponent<XRGrabInteractable>();
                     if (tileInteractable == null)
                     {
                         tileInteractable = tile.AddComponent<XRGrabInteractable>();
                     }
 
-                    // Usa Kinematic per movimento più diretto e veloce
-                    tileInteractable.movementType = XRBaseInteractable.MovementType.Instantaneous;
+                    // Il resto della configurazione sarà gestito da DirectTileMovement
 
-                    // Disabilita tracking di rotazione e scala
-                    tileInteractable.trackRotation = false;
-                    tileInteractable.trackScale = false;
-                    tileInteractable.trackPosition = true;
-
-                    // Disabilita smoothing per movimento più reattivo
-                    tileInteractable.smoothPosition = false;
-                    tileInteractable.smoothRotation = false;
-
-                    // Aggiungi la tile alla riga corrispondente (solo quelle che possono essere mescolate)
+                    // Aggiungi la tile alla riga corrispondente
                     tilesByRow[row].Add(tile);
                 }
             }
