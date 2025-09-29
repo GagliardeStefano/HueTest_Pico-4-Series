@@ -112,6 +112,7 @@ public class GridManager : MonoBehaviour
                     tile.name = $"Row{rows - row}_Tile{col}";
 
                     // Aggiungi il componente di movimento diretto
+                    Debug.Log($"Aggiungo DirectTileMovement a {tile.name}");
                     tile.AddComponent<DirectTileMovement>();
 
                     // Assicurati che ci sia un XRGrabInteractable

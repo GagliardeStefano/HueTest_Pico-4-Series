@@ -53,6 +53,11 @@ public class DirectTileMovement : MonoBehaviour
         // Salva le posizioni di partenza (LOCAL per il tassello, WORLD per il controller)
         startTileLocalPosition = transform.localPosition;
         startControllerWorldPosition = controllerTransform.position;
+        Vector3 elevatedPosition = transform.localPosition + new Vector3(0, 0.5f, 0);
+
+        this.transform.localPosition = elevatedPosition;
+
+
     }
 
     private void OnGrabEnd(SelectExitEventArgs args)
@@ -127,6 +132,9 @@ public class DirectTileMovement : MonoBehaviour
             Vector3 myPos = movablePositions.GetValueOrDefault(this.name);
 
             Vector3 nearestPos = movablePositions.GetValueOrDefault(nearestTile.name);
+
+            Debug.Log($"Scambio {this.name} in {myPos} con {nearestTile.name} in {nearestPos}");
+
 
             // Scambia le posizioni
             transform.localPosition = nearestPos;
