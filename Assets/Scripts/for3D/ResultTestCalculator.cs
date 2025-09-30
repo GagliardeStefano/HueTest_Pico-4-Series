@@ -8,7 +8,9 @@ public class ResultTestCalculator : MonoBehaviour
     public Transform GridManager;       // contiene tutti i cubi Row1_… Row4_…
 
     [Header("UI Containers")]
-    public GameObject OutputContainer;
+    public GameObject TestContainer;
+    public GameObject CanvasInputContainer;
+    public GameObject CanvasOutputContainer;
 
     private Dictionary<int, List<Transform>> rowTilesMap = new();
     private readonly int[] startCaps = { 1, 11, 21, 31 };
@@ -25,14 +27,17 @@ public class ResultTestCalculator : MonoBehaviour
         var result = CalculateTotalErrorScore();
         result.Verdict = ColorTestEvaluator.DecideAxisImpairment(result);
         result.VerdictMessage = ColorTestEvaluator.VerdictToMessage(result.Verdict);
+        Debug.Log($"Generato il result e total tes: {result.TotalTES}");
         ComputeSeverityMetrics(result);
-        FindObjectOfType<TesReportUI>().ShowReport(result);
         SetTestMode(false);
+        FindObjectOfType<TesReportUI>().ShowReport(result);
     }
 
     private void SetTestMode(bool isTestMode)
     {
-        OutputContainer.SetActive(!isTestMode);
+        TestContainer.SetActive(isTestMode);
+        CanvasInputContainer.SetActive(isTestMode);
+        CanvasOutputContainer.SetActive(!isTestMode);
     }
 
     private void PopulateRowTilesMap()

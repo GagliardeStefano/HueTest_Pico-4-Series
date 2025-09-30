@@ -10,9 +10,9 @@ public class GridManager : MonoBehaviour
     public GameObject cubePrefab;
 
     [Header("Dimensioni griglia")]
-    public int rows = 2;
-    public int columns = 5;
-    public float spacing = 0.3f; // distanza tra i cube
+    public int rows = 4;
+    public int columns = 10;
+    public float spacing = 1.25f; // distanza tra i cube
 
     [Header("Altezza sopra il plane")]
     public float yOffset = 0.01f; // leggero offset per non affondare i cube
@@ -80,7 +80,7 @@ public class GridManager : MonoBehaviour
             for (int col = 0; col < columns; col++)
             {
                 // calcola posizione nella griglia
-                Vector3 localPos = new Vector3(col * spacing, yOffset, -row * spacing);
+                Vector3 localPos = new Vector3(col * spacing, yOffset, (-row * spacing)-0.2f);
 
                 // istanzia il cube senza ereditare la scala del parent
                 GameObject tile = Instantiate(cubePrefab);

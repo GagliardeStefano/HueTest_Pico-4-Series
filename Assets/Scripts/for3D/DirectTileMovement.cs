@@ -55,7 +55,10 @@ public class DirectTileMovement : MonoBehaviour
         startControllerWorldPosition = controllerTransform.position;
         Vector3 elevatedPosition = transform.localPosition + new Vector3(0, 1, 0);
 
+        
+        Debug.Log($"Tassello {this.gameObject} Prima di assegnazione elevatedPosition: {this.transform.localPosition}");
         this.transform.localPosition = elevatedPosition;
+        Debug.Log($"Tassello {this.gameObject} Dopo assegnazione elevatedPosition: {this.transform.localPosition}");
 
 
     }
@@ -108,17 +111,22 @@ public class DirectTileMovement : MonoBehaviour
         {
             GameObject otherTile = tileMovement.gameObject;
             // Salta se è lo stesso cubo
-            if (otherTile == gameObject) continue;
+            if (otherTile == this.gameObject) continue;
 
             Vector3 otherPos = otherTile.transform.localPosition;
             // Controlla se è nella stessa riga (stesso Z)
+            Debug.Log("Prima dell'IF della stessa riga");
+            Debug.Log($"Sta controllando il tassello (other) {otherTile.name} che ha posizione {otherPos} e il tassello (grabbato) {gameObject.name} che ha posizione {currentPos}");
             if (Mathf.Approximately(otherPos.z, currentPos.z))
             {
+                Debug.Log("DOPO dell'IF della stessa riga, quindi fanno parte della stessa riga");
+                Debug.Log("Vicino nella stessa riga");
                 float distance = Mathf.Abs(currentPos.x - otherPos.x);
                 if (distance < shortestDistance)
                 {
                     shortestDistance = distance;
                     nearestTile = otherTile;
+                    Debug.Log($"Trovato nuovo vicino {otherTile.name}");
                 }
             }
         }
@@ -127,6 +135,7 @@ public class DirectTileMovement : MonoBehaviour
         // Controlla se il tassello più vicino è entro la soglia di distanza
         if (nearestTile != null && shortestDistance <= swapDistanceThreshold)
         {
+            Debug.Log("esiste il vicino");
             Vector3 myPos = movablePositions.GetValueOrDefault(this.name);
             Vector3 nearestPos = movablePositions.GetValueOrDefault(nearestTile.name);
 
@@ -142,6 +151,7 @@ public class DirectTileMovement : MonoBehaviour
         }
         else
         {
+            Debug.Log("Non esiste il vicino");
             // Se non trova nessun cubo vicino o è troppo lontano, torna alla posizione di partenza
             if (nearestTile != null)
             {
