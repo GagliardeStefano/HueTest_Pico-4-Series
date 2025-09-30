@@ -53,7 +53,7 @@ public class DirectTileMovement : MonoBehaviour
         // Salva le posizioni di partenza (LOCAL per il tassello, WORLD per il controller)
         startTileLocalPosition = transform.localPosition;
         startControllerWorldPosition = controllerTransform.position;
-        Vector3 elevatedPosition = transform.localPosition + new Vector3(0, 0.5f, 0);
+        Vector3 elevatedPosition = transform.localPosition + new Vector3(0, 1, 0);
 
         this.transform.localPosition = elevatedPosition;
 
@@ -95,27 +95,26 @@ public class DirectTileMovement : MonoBehaviour
 
     private void SwapWithNearestTile()
     {
+        // Soglia di distanza massima per effettuare lo swap
+        float swapDistanceThreshold = 0.5f; // Modifica questo valore secondo le tue esigenze
+
         Vector3 currentPos = transform.localPosition;
         GameObject nearestTile = null;
         float shortestDistance = float.MaxValue;
 
         // Cerca tutti i cubi movibili nella stessa riga
         DirectTileMovement[] allMovableTiles = gridParent.GetComponentsInChildren<DirectTileMovement>();
-
         foreach (DirectTileMovement tileMovement in allMovableTiles)
         {
             GameObject otherTile = tileMovement.gameObject;
-
             // Salta se è lo stesso cubo
             if (otherTile == gameObject) continue;
 
             Vector3 otherPos = otherTile.transform.localPosition;
-
             // Controlla se è nella stessa riga (stesso Z)
             if (Mathf.Approximately(otherPos.z, currentPos.z))
             {
                 float distance = Mathf.Abs(currentPos.x - otherPos.x);
-
                 if (distance < shortestDistance)
                 {
                     shortestDistance = distance;
@@ -124,17 +123,14 @@ public class DirectTileMovement : MonoBehaviour
             }
         }
 
-        // Se hai trovato un cubo vicino, scambia le posizioni
-        if (nearestTile != null)
+        Dictionary<string, Vector3> movablePositions = gridManager.InitialTilePositions;
+        // Controlla se il tassello più vicino è entro la soglia di distanza
+        if (nearestTile != null && shortestDistance <= swapDistanceThreshold)
         {
-            Dictionary<string, Vector3> movablePositions = gridManager.InitialTilePositions;
-
             Vector3 myPos = movablePositions.GetValueOrDefault(this.name);
-
             Vector3 nearestPos = movablePositions.GetValueOrDefault(nearestTile.name);
 
-            Debug.Log($"Scambio {this.name} in {myPos} con {nearestTile.name} in {nearestPos}");
-
+            Debug.Log($"Scambio {this.name} in {myPos} con {nearestTile.name} in {nearestPos} (distanza: {shortestDistance})");
 
             // Scambia le posizioni
             transform.localPosition = nearestPos;
@@ -146,8 +142,17 @@ public class DirectTileMovement : MonoBehaviour
         }
         else
         {
-            // Se non trova nessun cubo vicino, torna alla posizione di partenza
-            transform.localPosition = startTileLocalPosition;
+            // Se non trova nessun cubo vicino o è troppo lontano, torna alla posizione di partenza
+            if (nearestTile != null)
+            {
+                Debug.Log($"Tassello troppo lontano per lo swap. Distanza: {shortestDistance}, soglia: {swapDistanceThreshold}");
+            }
+            else
+            {
+                Debug.Log($"Nessun tassello trovato per lo swap di {this.name}");
+            }
+
+            transform.localPosition = movablePositions.GetValueOrDefault(this.name);
         }
     }
 
