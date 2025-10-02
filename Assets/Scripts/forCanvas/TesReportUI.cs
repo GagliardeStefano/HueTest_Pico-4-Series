@@ -172,7 +172,7 @@ public class TesReportUI : MonoBehaviour
             return "<i>Nessun errore sui tasselli</i>\n";
 
         var sb = new StringBuilder();
-        sb.AppendLine("<b>I 10 principali errori (ordinati per gravit�):</b>");
+        sb.AppendLine("<b>I 10 principali errori (ordinati per gravità):</b>");
 
         int i = 0;
         foreach (var t in r.TileErrors)
@@ -180,7 +180,7 @@ public class TesReportUI : MonoBehaviour
             if (i >= 10) break;
 
             string axisColored = WrapColor(t.Axis, AxisToColor(t.Axis));
-            sb.AppendLine($"Row {t.RowIndex + 1} Pos {t.Pos} Cap {t.CapID} Color {ColorToHex(t.Color)} {axisColored} Hue={t.HueDeg:F0}� C={t.Chroma:F1} CE={t.CEj} Err={t.Err} Severity {t.TileSeverityPct:F1}%");
+            sb.AppendLine($"Row {t.RowIndex + 1} Pos {t.Pos} Cap {t.CapID} Color {ColorToHex(t.Color)} {axisColored} Hue={t.HueDeg:F0}% C={t.Chroma:F1} CE={t.CEj} Err={t.Err} Severity {t.TileSeverityPct:F1}%");
 
             i++;
         }
@@ -193,7 +193,7 @@ public class TesReportUI : MonoBehaviour
             return "<i>Nessun errore sui tasselli</i>\n";
 
         var sb = new StringBuilder();
-        sb.AppendLine("<b>I colori pi� problematici:</b>");
+        sb.AppendLine("<b>I colori più problematici:</b>");
         foreach (var (t, i) in r.TileErrors.Take(5).Select((t, i) => (t, i)))
         {
             string axisColored = WrapColor(t.Axis, AxisToColor(t.Axis));

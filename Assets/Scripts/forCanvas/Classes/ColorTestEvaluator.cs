@@ -50,12 +50,12 @@ public class ColorTestEvaluator
             case AxisVerdict.None:
                 return "Nessun problema evidente: punteggio troppo basso per segnalare un deficit";
             case AxisVerdict.Probable_RG:
-                return "Indicazione: possibile deficit sull'asse Rosso�Verde (protan/deutan)";
+                return "Indicazione: possibile deficit sull'asse Rosso-Verde (protan/deutan)";
             case AxisVerdict.Probable_BY:
-                return "Indicazione: possibile deficit sull'asse Blu�Giallo (tritan-like)";
+                return "Indicazione: possibile deficit sull'asse Blu-Giallo (tritan-like)";
             case AxisVerdict.Inconclusive:
             default:
-                return "errori presenti ma non � possibile classificare un asse.";
+                return "errori presenti ma non é possibile classificare un asse.";
         }
     }
 }
