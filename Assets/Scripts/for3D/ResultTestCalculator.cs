@@ -16,8 +16,11 @@ public class ResultTestCalculator : MonoBehaviour
     private readonly int[] startCaps = { 1, 11, 21, 31 };
     private string[] axisCache;
 
+    private GridManager builder;
+
     void Start()
     {
+        builder = TestContainer.GetComponent<GridManager>();
         SetTestMode(true);
     }
 
@@ -38,6 +41,12 @@ public class ResultTestCalculator : MonoBehaviour
         TestContainer.SetActive(isTestMode);
         CanvasInputContainer.SetActive(isTestMode);
         CanvasOutputContainer.SetActive(!isTestMode);
+    }
+
+    public void ResetTest()
+    {
+        builder.ResetGrid();
+        SetTestMode(true);
     }
 
     private void PopulateRowTilesMap()

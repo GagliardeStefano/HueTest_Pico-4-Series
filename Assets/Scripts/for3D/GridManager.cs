@@ -58,8 +58,25 @@ public class GridManager : MonoBehaviour
         InitialTilePositions = GetMovableTilePositions();
     }
 
-    void GenerateGrid()
+    public void ResetGrid()
     {
+        GenerateGrid();
+        ShuffleTilesByRow();
+        InitialTilePositions = GetMovableTilePositions();
+    }
+
+    public void ClearAllRows()
+    {
+        foreach (Transform child in transform)
+        {
+            Destroy(child.gameObject); // distrugge il GameObject del figlio
+        }
+    }
+
+    public void GenerateGrid()
+    {
+        ClearAllRows();
+
         if (cubePrefab == null)
         {
             Debug.LogError("Nessun prefab assegnato al CubeGridManager!");
