@@ -54,14 +54,14 @@ public class GridManager : MonoBehaviour
     void Start()
     {
         GenerateGrid();
-        //ShuffleTilesByRow();
+        ShuffleTilesByRow();
         InitialTilePositions = GetMovableTilePositions();
     }
 
     public void ResetGrid()
     {
         GenerateGrid();
-        //ShuffleTilesByRow();
+        ShuffleTilesByRow();
         InitialTilePositions = GetMovableTilePositions();
     }
 

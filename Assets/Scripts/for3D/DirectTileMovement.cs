@@ -15,7 +15,7 @@ public class DirectTileMovement : MonoBehaviour
     private Transform gridParent;
     private float spacing = 1.25f;
 
-    private readonly float minX = -4.25f, maxX = 5.75f; // Limiti per riga 
+    private readonly float minX = -4.25f, maxX = 4.50f; // Limiti per riga 
 
     [Header("Movement Settings")]
     public float movementMultiplier = 50f; // Amplifica il movimento del controller
