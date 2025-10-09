@@ -77,11 +77,13 @@ public class GridManager : MonoBehaviour
 
     public Dictionary<string, Vector3> InitialTilePositions;
 
-    void Start()
+    public void StartWithTest()
     {
-        GenerateGrid(4,10,1);
+        Debug.Log("########################### chiamata funzione StartWithTest");
+        GenerateGrid(4, 10, 1);       
         ShuffleTilesByRow();
         InitialTilePositions = GetMovableTilePositions();
+        SwitchScene.Instance.ShowCanvasHueTest();
     }
 
     public void ResetGrid()
@@ -153,7 +155,10 @@ public class GridManager : MonoBehaviour
                     (-row * spacing) - 0.2f
                 );
 
+                // istanzia il cube senza ereditare la scala del parent
                 GameObject tile = Instantiate(cubePrefab);
+
+                // posiziona il cube come figlio del GridManager
                 tile.transform.SetParent(transform, worldPositionStays: false);
                 tile.transform.localPosition = localPos;
 
@@ -187,7 +192,10 @@ public class GridManager : MonoBehaviour
 
                 globalTileIndex++; // Incrementa per ogni tile creata
 
+                // ruota il cube per appoggiarlo sul plane (non serve rotazione come il quad)
                 tile.transform.localRotation = Quaternion.identity;
+
+                // forza scala quadrata con spessore minimo
                 tile.transform.localScale = new Vector3(cubeSize, thickness, cubeSize);
 
                 // Prima e ultima colonna sono fisse (Start/End)
@@ -214,8 +222,7 @@ public class GridManager : MonoBehaviour
                 }
                 else
                 {
-                    // Tutte le altre tile sono movibili
-                    tile.name = $"Row{rows - row}_Tile{col + 1}";
+                    tile.name = $"Row{rows - row}_Tile{col}";
 
                     tile.AddComponent<DirectTileMovement>();
 
@@ -361,6 +368,7 @@ public class ConstrainedMovement : MonoBehaviour
 
     private void OnGrabStart(SelectEnterEventArgs args)
     {
+        // Salva la posizione corrente come riferimento
         originalPosition = transform.localPosition;
     }
 
