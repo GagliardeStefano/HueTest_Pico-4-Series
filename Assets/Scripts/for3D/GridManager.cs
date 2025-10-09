@@ -51,11 +51,13 @@ public class GridManager : MonoBehaviour
 
     public Dictionary<string, Vector3> InitialTilePositions;
 
-    void Start()
+    public void StartWithTest()
     {
+        Debug.Log("########################### chiamata funzione StartWithTest");
         GenerateGrid();
         ShuffleTilesByRow();
         InitialTilePositions = GetMovableTilePositions();
+        SwitchScene.Instance.ShowCanvasHueTest();
     }
 
     public void ResetGrid()

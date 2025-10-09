@@ -21,7 +21,9 @@ public class ResultTestCalculator : MonoBehaviour
     void Start()
     {
         builder = TestContainer.GetComponent<GridManager>();
-        SetTestMode(true);
+        //SwitchScene.Instance.ActiveCanvasScene();
+        //SwitchScene.Instance.ShowCanvasTutorial();
+        //SetTestMode(true);
     }
 
     public void CalculateOutputTest()
@@ -32,21 +34,25 @@ public class ResultTestCalculator : MonoBehaviour
         result.VerdictMessage = ColorTestEvaluator.VerdictToMessage(result.Verdict);
         Debug.Log($"Generato il result e total tes: {result.TotalTES}");
         ComputeSeverityMetrics(result);
-        SetTestMode(false);
+        //SwitchScene.Instance.ActiveTestScene();
+        SwitchScene.Instance.ShowCanvasOutput();
+        //SetTestMode(false);
         FindObjectOfType<TesReportUI>().ShowReport(result);
     }
 
+    /*
     private void SetTestMode(bool isTestMode)
     {
         TestContainer.SetActive(isTestMode);
         CanvasInputContainer.SetActive(isTestMode);
         CanvasOutputContainer.SetActive(!isTestMode);
-    }
+    }*/
 
     public void ResetTest()
     {
         builder.ResetGrid();
-        SetTestMode(true);
+        SwitchScene.Instance.ShowCanvasHueTest();
+        //SetTestMode(true);
     }
 
     private void PopulateRowTilesMap()
