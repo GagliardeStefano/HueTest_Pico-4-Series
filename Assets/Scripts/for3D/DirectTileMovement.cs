@@ -13,7 +13,6 @@ public class DirectTileMovement : MonoBehaviour
 
     // Riferimento al GridManager per ottenere il spacing e i limiti
     private Transform gridParent;
-    private float spacing = 1.25f;
 
     private readonly float minX = -4.25f, maxX = 4.50f; // Limiti per riga 
 

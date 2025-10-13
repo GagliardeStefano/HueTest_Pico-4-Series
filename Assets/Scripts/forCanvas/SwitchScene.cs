@@ -24,8 +24,7 @@ public class SwitchScene : MonoBehaviour
     }
 
     public void ShowCanvasTutorial()
-    {
-        if (canvasTutorial == null) return; // sicurezza per la prima scena
+    { 
         canvasTutorial.SetActive(true);
         canvasHueTest.SetActive(false);
         canvasOutput.SetActive(false);
@@ -33,13 +32,6 @@ public class SwitchScene : MonoBehaviour
 
     public void ShowCanvasHueTest()
     {
-        if (canvasHueTest == null)
-        {
-            Debug.Log("ShowHueTest -> canvas non esiste");
-            return;
-        }
-
-        Debug.Log("La canvas c'è ");
         canvasTutorial.SetActive(false);
         canvasHueTest.SetActive(true);
         canvasOutput.SetActive(false);
@@ -47,7 +39,6 @@ public class SwitchScene : MonoBehaviour
 
     public void ShowCanvasOutput()
     {
-        if (canvasOutput == null) return;
         canvasTutorial.SetActive(false);
         canvasHueTest.SetActive(false);
         canvasOutput.SetActive(true);

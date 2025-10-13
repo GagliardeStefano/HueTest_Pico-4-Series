@@ -1,5 +1,6 @@
 ﻿using JetBrains.Annotations;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -23,6 +24,8 @@ public class GridManager : MonoBehaviour
     public float outlineWidth = 3f; // spessore dell'outline per inizio/fine riga
 
     private List<List<GameObject>> tilesByRow; // Lista di liste per organizzare le tiles per riga
+
+    public TextMeshProUGUI TextProgressPage;
 
     private readonly Dictionary<string, Color> tileColorDict = new Dictionary<string, Color>
     {
@@ -77,17 +80,16 @@ public class GridManager : MonoBehaviour
 
     public Dictionary<string, Vector3> InitialTilePositions;
 
-    public void StartWithTest()
+    public int pageNumTutorial = 0;
+    public void Start()
     {
-        Debug.Log("########################### chiamata funzione StartWithTest");
-        GenerateGrid(4, 10, 1);       
-        ShuffleTilesByRow();
+        GenerateTutorialGrid();
         InitialTilePositions = GetMovableTilePositions();
-        SwitchScene.Instance.ShowCanvasHueTest();
+        SwitchScene.Instance.ShowCanvasTutorial();
     }
-
     public void ResetGrid()
     {
+        SwitchScene.Instance.ShowCanvasHueTest();
         GenerateGrid(4, 10, 1);
         ShuffleTilesByRow();
         InitialTilePositions = GetMovableTilePositions();
@@ -101,24 +103,36 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    // Genera griglia 1x5 con colori: 1-8, 2-4, 3-1, 3-10, 4-5
-    public void GenerateTutorialGrid1()
-    {
-        string[] tutorialColors = { "1-8", "2-4", "3-1", "3-10", "4-5" };
-        GenerateCustomGrid(1, tutorialColors);
-    }
-
     // Genera griglia 2x5 saltando colori ogni 4
-    public void GenerateTutorialGrid2()
+    public void GenerateTutorialGrid()
     {
-        GenerateGrid(2, 5, 4);
+        pageNumTutorial++;
+      
+        switch (pageNumTutorial)
+        {
+            case 1:
+                transform.position = new Vector3(-3.38f, 7.76f, -0.5f);
+                string[] tutorialColors = { "4-1", "4-4", "4-7", "4-10", "3-3", "3-6", "3-9" };
+                GenerateCustomGrid(1, tutorialColors);
+                break;
+
+            case 2:
+                transform.position = new Vector3(-5.64f, 7.2f, -0.5f);
+                GenerateGrid(2, 10, 2);
+                Debug.Log("Initial tile position " + InitialTilePositions);
+                break;
+            
+            default:
+                transform.position = new Vector3(-5.64f, 5.69f, -0.5f);
+                SwitchScene.Instance.ShowCanvasHueTest();
+                GenerateGrid(4, 10, 1);
+                break;
+        }
+        TextProgressPage.text = $"{pageNumTutorial}/2";
+       // ShuffleTilesByRow();
+        InitialTilePositions = GetMovableTilePositions();
     }
 
-    // Genera griglia 2x10 con salto 2
-    public void GenerateTutorialGrid3()
-    {
-        GenerateGrid(2, 10, 2);
-    }
 
     /// <summary>
     /// Genera una griglia di dimensioni rows x columns
@@ -275,19 +289,32 @@ public class GridManager : MonoBehaviour
                     Debug.LogWarning($"Colore non trovato: {colorKey}");
                 }
 
-                tile.transform.localRotation = Quaternion.identity;
-                tile.transform.localScale = new Vector3(cubeSize, thickness, cubeSize);
-                tile.name = $"Tutorial_Row{rows - row}_Tile{col + 1}";
-
-                // Tutte le tile del tutorial sono movibili
-                tile.AddComponent<DirectTileMovement>();
-                XRGrabInteractable tileInteractable = tile.GetComponent<XRGrabInteractable>();
-                if (tileInteractable == null)
+                if(col == 0)
                 {
-                    tileInteractable = tile.AddComponent<XRGrabInteractable>();
-                }
+                    tile.transform.localRotation = Quaternion.identity;
+                    tile.transform.localScale = new Vector3(cubeSize, thickness, cubeSize);
+                    tile.name = $"Tutorial_Row{rows - row}_Start";
 
-                tilesByRow[row].Add(tile);
+                }else if(col == colorKeys.Length - 1)
+                {
+                    tile.transform.localRotation = Quaternion.identity;
+                    tile.transform.localScale = new Vector3(cubeSize, thickness, cubeSize);
+                    tile.name = $"Tutorial_Row{rows - row}_End";
+                }
+                else
+                {
+                    tile.transform.localRotation = Quaternion.identity;
+                    tile.transform.localScale = new Vector3(cubeSize, thickness, cubeSize);
+                    tile.name = $"Tutorial_Row{rows - row}_Tile{col + 1}";
+                    tile.AddComponent<DirectTileMovement>();
+                    XRGrabInteractable tileInteractable = tile.GetComponent<XRGrabInteractable>();
+                    if (tileInteractable == null)
+                    {
+                        tileInteractable = tile.AddComponent<XRGrabInteractable>();
+                    }
+
+                    tilesByRow[row].Add(tile);
+                }
             }
         }
     }
