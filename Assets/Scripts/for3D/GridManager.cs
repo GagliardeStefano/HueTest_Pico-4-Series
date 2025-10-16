@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿
+using JetBrains.Annotations;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -107,7 +108,7 @@ public class GridManager : MonoBehaviour
     public void GenerateTutorialGrid()
     {
         pageNumTutorial++;
-      
+
         switch (pageNumTutorial)
         {
             case 1:
@@ -121,7 +122,7 @@ public class GridManager : MonoBehaviour
                 GenerateGrid(2, 10, 2);
                 Debug.Log("Initial tile position " + InitialTilePositions);
                 break;
-            
+
             default:
                 transform.position = new Vector3(-5.64f, 5.69f, -0.5f);
                 SwitchScene.Instance.ShowCanvasHueTest();
@@ -129,15 +130,20 @@ public class GridManager : MonoBehaviour
                 break;
         }
         TextProgressPage.text = $"{pageNumTutorial}/2";
-       // ShuffleTilesByRow();
+        ShuffleTilesByRow();
         InitialTilePositions = GetMovableTilePositions();
     }
 
 
     /// <summary>
-    /// Genera una griglia di dimensioni rows x columns
-    /// jump: salto negli INDICI dei COLORI (non nelle posizioni fisiche)
-    /// Es: jump=2 usa i colori 1,3,5,7,9 ma crea le tile in posizioni consecutive 0,1,2,3,4
+    /// Genera una griglia di dimensioni rows x columns.
+    /// La selezione del colore segue l'ordine delle righe personalizzato: 4 -> 1 -> 2 -> 3.
+    /// 'jump': Salta gli INDICI dei COLORI all'interno della sequenza personalizzata.
+    /// </summary>
+    /// <summary>
+    /// Genera una griglia di dimensioni rows x columns.
+    /// Se jump = 1, l'ordine dei colori è sequenziale (riga 1->2->3->4).
+    /// Se jump != 1, l'ordine è personalizzato (riga 4->1->2->3) e applica il salto.
     /// </summary>
     public void GenerateGrid(int rows, int columns, int jump)
     {
@@ -149,104 +155,87 @@ public class GridManager : MonoBehaviour
             return;
         }
 
-        // Inizializza la lista delle righe
         tilesByRow = new List<List<GameObject>>();
         for (int i = 0; i < rows; i++)
         {
             tilesByRow.Add(new List<GameObject>());
         }
 
-        int globalTileIndex = 0; // Contatore globale delle tile create
+        int globalTileIndex = 0;
 
         for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < columns; col++)
             {
-                // Posizione fisica: usa col direttamente (tile consecutive)
-                Vector3 localPos = new Vector3(
-                    col * spacing,  // 0, 1.25, 2.5, 3.75... (sempre consecutive!)
-                    yOffset,
-                    (-row * spacing) - 0.2f
-                );
-
-                // istanzia il cube senza ereditare la scala del parent
+                Vector3 localPos = new Vector3(col * spacing, yOffset, (-row * spacing) - 0.2f);
                 GameObject tile = Instantiate(cubePrefab);
-
-                // posiziona il cube come figlio del GridManager
                 tile.transform.SetParent(transform, worldPositionStays: false);
                 tile.transform.localPosition = localPos;
 
-                // Indice colore: salta in base a jump usando l'indice globale
-                // globalTileIndex incrementa per ogni tile creata (0,1,2,3...)
-                // Moltiplica per jump per saltare i colori
-                int linearColorIndex = globalTileIndex * jump;
+                string colorIndex;
 
-                // Converti in riga e colonna del dizionario (che parte da 1)
-                int colorRow = (linearColorIndex / 10) + 1;  // Riga (1-4)
-                int colorCol = (linearColorIndex % 10) + 1;   // Colonna (1-10)
-
-                // Limita alle 4 righe disponibili nel dizionario
-                if (colorRow > 4)
+                // --- LOGICA CONDIZIONALE PER LA SELEZIONE DEL COLORE ---
+                if (jump == 1)
                 {
-                    colorRow = 4;
-                    colorCol = 10; // Usa l'ultimo colore disponibile
-                }
+                    // CASO 1: JUMP = 1 -> Ordine originale sequenziale
+                    int linearColorIndex = globalTileIndex; // Nessun salto
 
-                string colorIndex = $"{colorRow}-{colorCol}";
+                    int colorRow = (linearColorIndex / 10) + 1;
+                    int colorCol = (linearColorIndex % 10) + 1;
+
+                    // Limita alle 4 righe disponibili
+                    if (colorRow > 4)
+                    {
+                        colorRow = 4;
+                        colorCol = 10;
+                    }
+                    colorIndex = $"{colorRow}-{colorCol}";
+                }
+                else
+                {
+                    // CASO 2: JUMP != 1 -> Ordine personalizzato con salto
+                    int[] rowOrder = { 4, 3, 2, 1 };
+                    int linearColorIndex = globalTileIndex * jump;
+                    int blockIndex = linearColorIndex / 10;
+                    int colorRow = rowOrder[blockIndex % rowOrder.Length];
+                    int colorCol = (linearColorIndex % 10) + 1;
+                    colorIndex = $"{colorRow}-{colorCol}";
+                }
+                // --- FINE LOGICA ---
 
                 if (tileColorDict.ContainsKey(colorIndex))
                 {
                     SetColor(ref tile, ref colorIndex);
-                    Debug.Log($"Assegnato colore {colorIndex} alla tile in Row{rows - row}_Tile{col + 1}");
                 }
                 else
                 {
-                    Debug.LogWarning($"Colore non trovato per indice: {colorIndex}");
+                    Debug.LogWarning($"Colore non trovato per l'indice: {colorIndex}");
                 }
 
-                globalTileIndex++; // Incrementa per ogni tile creata
+                globalTileIndex++;
 
-                // ruota il cube per appoggiarlo sul plane (non serve rotazione come il quad)
                 tile.transform.localRotation = Quaternion.identity;
-
-                // forza scala quadrata con spessore minimo
                 tile.transform.localScale = new Vector3(cubeSize, thickness, cubeSize);
 
-                // Prima e ultima colonna sono fisse (Start/End)
                 bool isFirstCol = col == 0;
                 bool isLastCol = col == columns - 1;
 
                 if (isFirstCol)
                 {
                     tile.name = $"Row{rows - row}_Start";
-                    Outline outline = tile.GetComponent<Outline>();
-                    if (outline != null)
-                    {
-                        outline.effectColor = Color.red;
-                    }
                 }
                 else if (isLastCol)
                 {
                     tile.name = $"Row{rows - row}_End";
-                    Outline outline = tile.GetComponent<Outline>();
-                    if (outline != null)
-                    {
-                        outline.effectColor = Color.red;
-                    }
                 }
                 else
                 {
                     tile.name = $"Row{rows - row}_Tile{col}";
-
                     tile.AddComponent<DirectTileMovement>();
-
-                    XRGrabInteractable tileInteractable = tile.GetComponent<XRGrabInteractable>();
-                    if (tileInteractable == null)
+                    if (tile.GetComponent<XRGrabInteractable>() == null)
                     {
-                        tileInteractable = tile.AddComponent<XRGrabInteractable>();
+                        tile.AddComponent<XRGrabInteractable>();
                     }
-
-                    // Aggiungi alle tile movibili della riga
                     tilesByRow[row].Add(tile);
                 }
             }
@@ -289,13 +278,14 @@ public class GridManager : MonoBehaviour
                     Debug.LogWarning($"Colore non trovato: {colorKey}");
                 }
 
-                if(col == 0)
+                if (col == 0)
                 {
                     tile.transform.localRotation = Quaternion.identity;
                     tile.transform.localScale = new Vector3(cubeSize, thickness, cubeSize);
                     tile.name = $"Tutorial_Row{rows - row}_Start";
 
-                }else if(col == colorKeys.Length - 1)
+                }
+                else if (col == colorKeys.Length - 1)
                 {
                     tile.transform.localRotation = Quaternion.identity;
                     tile.transform.localScale = new Vector3(cubeSize, thickness, cubeSize);
