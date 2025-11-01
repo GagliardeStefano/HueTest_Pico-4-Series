@@ -1,5 +1,6 @@
 ﻿
 using JetBrains.Annotations;
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -78,6 +79,10 @@ public class GridManager : MonoBehaviour
         { "4-9",  new Color32(162,137,70,255) },
         { "4-10", new Color32(157,142,72,255) }
     };
+
+    private Dictionary<string, Color> tileColorCorrectedDict = new Dictionary<string, Color>();
+
+    private Boolean isAffectedByColorDeficiency = false;
 
     public Dictionary<string, Vector3> InitialTilePositions;
 
@@ -314,7 +319,10 @@ public class GridManager : MonoBehaviour
         Renderer renderer = tile.GetComponent<Renderer>();
         if (renderer != null && tileColorDict.ContainsKey(colorIndex))
         {
-            renderer.material.color = tileColorDict[colorIndex];
+            if (isAffectedByColorDeficiency)
+                renderer.material.color = tileColorCorrectedDict[colorIndex];
+            else
+                renderer.material.color = tileColorDict[colorIndex];
         }
         else
         {
@@ -359,6 +367,16 @@ public class GridManager : MonoBehaviour
         }
 
         return movableTilePositions;
+    }
+
+    public void SetColorDeficiency()
+    {
+        isAffectedByColorDeficiency = !isAffectedByColorDeficiency;
+        tileColorCorrectedDict.Clear();
+
+        //TODO aggiungere tipo anomalia come parametro
+        tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Tritanomaly);
+        ResetGrid();
     }
 }
 
