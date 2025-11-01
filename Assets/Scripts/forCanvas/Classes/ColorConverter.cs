@@ -23,7 +23,7 @@ public class ColorConverter
 
     public string AssignAxis(Color32 color32)
     {
-        LabColor lab = ColourfulConverter.Instance.ConvertRGBtoLab(color32);
+        LabColor lab = ColourfulConverter.ConvertUnityColorToLab(color32);
 
         string info = GetInfoAxis(lab);
         Debug.Log($"RGB: {color32} -> Lab:{lab}; ## {info}");
@@ -36,8 +36,8 @@ public class ColorConverter
 
     public static void GetHueChroma(Color32 color32, out double hue, out double chroma)
     {
-        LabColor lab = ColourfulConverter.Instance.ConvertRGBtoLab(color32);
-        LChabColor lch = ColourfulConverter.Instance.ConvertLabToLCh(lab);
+        LabColor lab = ColourfulConverter.ConvertUnityColorToLab(color32);
+        LChabColor lch = ColourfulConverter.ConvertLabToLChab(lab);
 
         Debug.Log($"Lab: {lab} -> LCh:{lch}");
 

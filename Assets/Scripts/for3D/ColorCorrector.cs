@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Colourful; // Necessario per LMSColor, LabColor etc.
-using Colourful.Spaces; // Necessario per RGBColor
 using UnityEngine;
 
 /// <summary>
@@ -10,7 +9,7 @@ using UnityEngine;
 /// </summary>
 public static class ColorCorrector
 {
-    public enum DichromacyType
+    public enum AnomalyType
     {
         Protanopia, // Assenza coni L (Rosso)
         Deuteranopia, // Assenza coni M (Verde)
@@ -46,7 +45,7 @@ public static class ColorCorrector
     /// <param name="originalColor">Il colore originale (UnityEngine.Color).</param>
     /// <param name="type">Il tipo di dicromia da simulare.</param>
     /// <returns>Il colore simulato (UnityEngine.Color).</returns>
-    public static Color SimulateDichromacy(Color originalColor, DichromacyType type)
+    public static LMSColor SimulateDichromacy(Color originalColor, AnomalyType type)
     {
         // Converte da Unity Color a Colourful RGBColor (sRGB)
         RGBColor rgbColor = ColourfulConverter.UnityColorToRgbColor(originalColor);
@@ -58,35 +57,25 @@ public static class ColorCorrector
         double[,] simMatrix = GetSimulationMatrixLMS(type);
         LMSColor simulatedLms = ApplyLmsMatrix(lmsColor, simMatrix);
 
-        // Riconverte in RGB (sRGB)
-        RGBColor simulatedRgb = ColourfulConverter.ConvertLmsToRgb(simulatedLms);
-
-        // Converte di nuovo in Unity Color
-        return ColourfulConverter.RgbColorToUnityColor(simulatedRgb, originalColor.a);
+        return simulatedLms;
     }
 
     /// <summary>
     /// Corregge un colore per renderlo più distinguibile per un utente con dicromia.
     /// Implementa l'algoritmo di Fidaner et al. (proiezione errore su asse percepibile).
     /// </summary>
-    public static Color CorrectColor(Color originalColor, DichromacyType type)
+    public static Color CorrectColor(Color originalColor, AnomalyType type)
     {
-        // 0. Converti originale UnityColor in RGBColor (sRGB)
-        RGBColor originalRgb = ColourfulConverter.UnityColorToRgbColor(originalColor);
+        LMSColor originalLms = ColourfulConverter.ConvertRgbToLms(ColourfulConverter.UnityColorToRgbColor(originalColor));
+        //simula come il colore viene visto da un daltonico
+        LMSColor simulatedLms = SimulateDichromacy(originalColor, type);
 
-        // 1. Converti originale in LMS
-        LMSColor originalLms = ColourfulConverter.ConvertRgbToLms(originalRgb);
-
-        // 2. Simula come appare il colore in LMS
-        double[,] simMatrix = GetSimulationMatrixLMS(type);
-        LMSColor simulatedLms = ApplyLmsMatrix(originalLms, simMatrix);
-
-        // 3. Calcola l'errore nello spazio LMS (usando Vector3 per facilità di calcolo)
+        //Calcola l'errore nello spazio LMS (usando Vector3 per facilità di calcolo)
         Vector3 originalLmsVec = ColourfulConverter.LmsToVector3(originalLms);
         Vector3 simulatedLmsVec = ColourfulConverter.LmsToVector3(simulatedLms);
         Vector3 errorLms = originalLmsVec - simulatedLmsVec;
 
-        // 4. Applica la correzione (Metodo Fidaner et al.)
+        // 4. Applica la correzione (Metodo Fidaner)
         Vector3 correctedLmsVec = ApplyFidanerCorrection(originalLmsVec, errorLms, type);
         LMSColor correctedLms = ColourfulConverter.Vector3ToLmsColor(correctedLmsVec);
 
@@ -116,13 +105,13 @@ public static class ColorCorrector
     /// <summary>
     /// Genera un nuovo dizionario di colori corretti per il tipo di daltonismo specificato.
     /// </summary>
-    public static Dictionary<string, Color> GetNewTileColorDic(Dictionary<string, Color> originalTileColorDic, DichromacyType type)
+    public static Dictionary<string, Color> GetNewTileColorDic(Dictionary<string, Color> originalTileColorDic, AnomalyType type)
     {
         Dictionary<string, Color> newTileColorDic = new Dictionary<string, Color>();
-        foreach (var kvp in originalTileColorDic)
+        foreach (var color in originalTileColorDic)
         {
-            Color correctedColor = CorrectColor(kvp.Value, type);
-            newTileColorDic[kvp.Key] = correctedColor;
+            Color correctedColor = CorrectColor(color.Value, type);
+            newTileColorDic[color.Key] = correctedColor;
         }
         return newTileColorDic;
     }
@@ -133,13 +122,13 @@ public static class ColorCorrector
     /// <summary>
     /// Restituisce la matrice di simulazione LMS corretta per il tipo di dicromia.
     /// </summary>
-    private static double[,] GetSimulationMatrixLMS(DichromacyType type)
+    private static double[,] GetSimulationMatrixLMS(AnomalyType type)
     {
         switch (type)
         {
-            case DichromacyType.Protanopia: return ProtanopiaLMSMatrix;
-            case DichromacyType.Deuteranopia: return DeuteranopiaLMSMatrix;
-            case DichromacyType.Tritanopia: return TritanopiaLMSMatrix;
+            case AnomalyType.Protanopia: return ProtanopiaLMSMatrix;
+            case AnomalyType.Deuteranopia: return DeuteranopiaLMSMatrix;
+            case AnomalyType.Tritanopia: return TritanopiaLMSMatrix;
             default:
                 // Matrice identità se il tipo non è riconosciuto
                 return new double[,] { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
@@ -163,41 +152,54 @@ public static class ColorCorrector
     }
 
     /// <summary>
-    /// Applica la correzione di Fidaner et al.
-    /// Proietta l'errore sulla linea di confusione e lo sposta sull'asse di luminanza (L).
-    /// Per Tritanopia, lo sposta sull'asse M (come suggerito da alcune varianti).
+    /// Applica la correzione di Fidaner et al
+    /// per Protanopia/Deuteranopia, implementa la logica di spostamento dell'errore sull'asse S (crominanza blu-giallo)
+    /// Per Tritanopia, applica la logica inversa (sposta errore S su asse L-M).
     /// </summary>
-    private static Vector3 ApplyFidanerCorrection(Vector3 originalLms, Vector3 errorLms, DichromacyType type)
+    private static Vector3 ApplyFidanerCorrection(Vector3 originalLms, Vector3 errorLms, AnomalyType type)
     {
-        // Assi di proiezione dell'errore (approssimati per semplicità)
-        // Questi definiscono la direzione in cui l'informazione viene persa
-        Vector3 confusionAxis = Vector3.zero;
-        Vector3 shiftAxis = Vector3.zero; // Asse su cui spostare l'errore
+        // Fattore di correzione. 1.0 è comune, ma può essere sintonizzato (es. 0.7-1.0)
+        float correctionFactor = 1.0f;
+
+        Vector3 correctedLms;
 
         switch (type)
         {
-            case DichromacyType.Protanopia:
-                confusionAxis = new Vector3(0.0f, 1.0f, -1.0f).normalized; // Asse M-S approssimato
-                shiftAxis = new Vector3(1.0f, 0.0f, 0.0f); // Asse L
+            case AnomalyType.Protanopia:
+            case AnomalyType.Deuteranopia:
+                // Logica richiesta: Sposta l'errore L-M (errorLms.x - errorLms.y) sull'asse S.
+                // S_corretto = S_originale + (Errore_L - Errore_M) * Fattore
+
+                float errorLM = errorLms.x - errorLms.y;
+
+                correctedLms.x = originalLms.x; // L originale
+                correctedLms.y = originalLms.y; // M originale
+                correctedLms.z = originalLms.z + (errorLM * correctionFactor); // S corretto
+
                 break;
-            case DichromacyType.Deuteranopia:
-                confusionAxis = new Vector3(1.0f, 0.0f, -1.0f).normalized; // Asse L-S approssimato
-                shiftAxis = new Vector3(1.0f, 0.0f, 0.0f); // Asse L
+
+            case AnomalyType.Tritanopia:
+                // Logica inversa: il deficit è sull'asse S, quindi l'errore è errorLms.z.
+                // Spostiamo questo errore sull'asse L-M (rosso-verde) per renderlo visibile.
+
+                float errorS = errorLms.z;
+
+                // Aggiungiamo l'errore a L (più rosso) e sottraiamo da M (meno verde)
+                // per creare una distinzione cromatica sull'asse L-M.
+                // Il fattore 0.7 attenua la correzione per evitare colori troppo innaturali.
+                float shiftAmount = errorS * correctionFactor * 0.7f;
+
+                correctedLms.x = originalLms.x + shiftAmount;
+                correctedLms.y = originalLms.y - shiftAmount;
+                correctedLms.z = originalLms.z; // Canale S originale
                 break;
-            case DichromacyType.Tritanopia:
-                confusionAxis = new Vector3(1.0f, -1.0f, 0.0f).normalized; // Asse L-M approssimato
-                shiftAxis = new Vector3(0.0f, 1.0f, 0.0f); // Asse M
+
+            default:
+                correctedLms = originalLms;
                 break;
         }
 
-        float projectionMagnitude = Vector3.Dot(errorLms, confusionAxis);
-        // Vector3 projectedError = projectionMagnitude * confusionAxis; // Non usato nella versione semplificata
-        Vector3 shiftedError = projectionMagnitude * shiftAxis;
-
-        // Aggiunge l'errore spostato al colore originale LMS
-        Vector3 correctedLms = originalLms + shiftedError; // Semplificato: aggiunge solo lo shift
-
-        // Evita valori negativi per semplicità (potrebbe richiedere clamping/gamut mapping migliore)
+        // Evita valori negativi (clamping)
         correctedLms.x = Mathf.Max(0, correctedLms.x);
         correctedLms.y = Mathf.Max(0, correctedLms.y);
         correctedLms.z = Mathf.Max(0, correctedLms.z);

@@ -1,10 +1,7 @@
-﻿
-using JetBrains.Annotations;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit;
 
 public class GridManager : MonoBehaviour
@@ -340,7 +337,7 @@ public class GridManager : MonoBehaviour
             // Fisher-Yates shuffle per ogni riga
             for (int i = 0; i < rowTiles.Count; i++)
             {
-                int randIndex = Random.Range(i, rowTiles.Count);
+                int randIndex = UnityEngine.Random.Range(i, rowTiles.Count);
 
                 // Scambia le posizioni delle tiles nella griglia
                 Vector3 tempPosition = rowTiles[i].transform.localPosition;
@@ -375,7 +372,7 @@ public class GridManager : MonoBehaviour
         tileColorCorrectedDict.Clear();
 
         //TODO aggiungere tipo anomalia come parametro
-        tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Tritanomaly);
+        tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict,ColorCorrector.AnomalyType.Deuteranopia );
         ResetGrid();
     }
 }

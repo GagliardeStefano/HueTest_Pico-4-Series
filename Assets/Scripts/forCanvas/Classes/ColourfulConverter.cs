@@ -24,16 +24,26 @@ public static class ColourfulConverter
     private static readonly IColorConverter<XYZColor, LMSColor> xyzToLMSConverter =
         new ConverterBuilder()
             .FromXYZ(Illuminants.D65)
-            .ToLMS(LMSTransformationMatrix.Bradford) // XYZ -> LMS
+            .ToLMS() // XYZ -> LMS
             .Build();
 
-    private static readonly IColorConverter<LMSColor, RGBColor> lmsToRgbConverter =
+    private static readonly IColorConverter<LMSColor, XYZColor> lmsToXYXConverter =
         new ConverterBuilder()
-            .FromLMS(LMSTransformationMatrix.Bradford) // LMS -> XYZ
+            .FromLMS() // LMS -> XYZ
             .ToXYZ(Illuminants.D65)
-            .ToLinearRGB()                   // XYZ -> Lineare RGB
-            .ToRGB(RGBWorkingSpaces.sRGB)    // Lineare RGB -> sRGB
             .Build();
+
+    private static readonly IColorConverter<XYZColor, LinearRGBColor> xyzToLinearRGBConverter =
+        new ConverterBuilder()
+            .FromXYZ(Illuminants.D65)
+            .ToLinearRGB()
+            .Build();
+
+    private static readonly IColorConverter<LinearRGBColor, RGBColor> linearRGBToRgbConverter =
+            new ConverterBuilder()
+                .FromLinearRGB()
+                .ToRGB(RGBWorkingSpaces.sRGB)
+                .Build();
 
     private static readonly IColorConverter<RGBColor, LabColor> rgbToLabConverter =
        new ConverterBuilder()
@@ -79,19 +89,19 @@ public static class ColourfulConverter
     /// <summary>
     /// Converte un Colourful.RGBColor (sRGB) in Colourful.LMSColor.
     /// </summary>
-    public static LMSColor ConvertRgbToLms(RGBColor rgbColor)
-    {
-        return rgbToLmsConverter.Convert(rgbColor);
+    public static LMSColor ConvertRgbToLms(RGBColor rgbColor) { 
+        LinearRGBColor linearRgb = rgbToLinearRGBConverter.Convert(rgbColor);
+        XYZColor xyzColor = linearRGBToXYZConverter.Convert(linearRgb);
+        return xyzToLMSConverter.Convert(xyzColor);
+
     }
 
-    /// <summary>
-    /// Converte un Colourful.LMSColor in Colourful.RGBColor (sRGB).
-    /// </summary>
     public static RGBColor ConvertLmsToRgb(LMSColor lmsColor)
     {
-        return lmsToRgbConverter.Convert(lmsColor);
+        XYZColor xyzColor = lmsToXYXConverter.Convert(lmsColor);
+        LinearRGBColor linearRgb = xyzToLinearRGBConverter.Convert(xyzColor);
+        return linearRGBToRgbConverter.Convert(linearRgb);
     }
-
     /// <summary>
     /// Converte un UnityEngine.Color (gestendo lo spazio colore) in Colourful.LabColor.
     /// </summary>
