@@ -44,6 +44,4 @@ public class ColourfulConverter
 
         return lch;
     }
-
-
 }

@@ -18,22 +18,31 @@ public class ResultTestCalculator : MonoBehaviour
 
     private GridManager builder;
 
+    private TesResult result;
+
     void Start()
     {
+        result = new TesResult();
         builder = TestContainer.GetComponent<GridManager>();
     }
 
     public void CalculateOutputTest()
     {
         PopulateRowTilesMap();
-        var result = CalculateTotalErrorScore();
+        result = CalculateTotalErrorScore();
         result.Verdict = ColorTestEvaluator.DecideAxisImpairment(result);
         result.VerdictMessage = ColorTestEvaluator.VerdictToMessage(result.Verdict);
+        
         Debug.Log($"Generato il result e total tes: {result.TotalTES}");
         ComputeSeverityMetrics(result);
         GridManager.GetComponent<GridManager>().ClearAllRows();
         SwitchScene.Instance.ShowCanvasOutput();
         FindObjectOfType<TesReportUI>().ShowReport(result);
+    }
+
+    public TesResult GetTesResultPreTest()
+    {
+        return result;
     }
 
 
