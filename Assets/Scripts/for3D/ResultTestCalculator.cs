@@ -31,8 +31,14 @@ public class ResultTestCalculator : MonoBehaviour
         PopulateRowTilesMap();
         result = CalculateTotalErrorScore();
         result.Verdict = ColorTestEvaluator.DecideAxisImpairment(result);
+        //MODIFICA
+        if (result.Verdict == AxisVerdict.Probable_RG)
+        {
+            // raffinamento del verdetto
+            result.Verdict = ColorTestEvaluator.DistinguishRGDeficiency(result);
+        }
         result.VerdictMessage = ColorTestEvaluator.VerdictToMessage(result.Verdict);
-        
+
         Debug.Log($"Generato il result e total tes: {result.TotalTES}");
         ComputeSeverityMetrics(result);
         GridManager.GetComponent<GridManager>().ClearAllRows();

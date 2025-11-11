@@ -76,12 +76,15 @@ public class GridManager : MonoBehaviour
         { "4-9",  new Color32(162,137,70,255) },
         { "4-10", new Color32(157,142,72,255) }
     };
-
     private Dictionary<string, Color> tileColorCorrectedDict = new Dictionary<string, Color>();
 
-    private Boolean isAffectedByColorDeficiency = false;
-
     public Dictionary<string, Vector3> InitialTilePositions;
+
+    private bool isAffectedByColorDeficiency;
+    public GameObject ResultCalculator;
+
+    private TesResult resultPreTest;
+
 
     public int pageNumTutorial = 0;
     public void Start()
@@ -366,13 +369,33 @@ public class GridManager : MonoBehaviour
         return movableTilePositions;
     }
 
-    public void SetColorDeficiency()
-    {
-        isAffectedByColorDeficiency = !isAffectedByColorDeficiency;
+    public void SetColorDeficiency() {
+        Debug.Log("Toggle color deficiency");
         tileColorCorrectedDict.Clear();
-
-        //TODO aggiungere tipo anomalia come parametro
-        tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict,ColorCorrector.AnomalyType.Deuteranopia );
+        resultPreTest = ResultCalculator.GetComponent<ResultTestCalculator>().GetTesResultPreTest();
+        Debug.Log("############ result in SetColorDeficiency: \n" + resultPreTest.Verdict);
+        switch(resultPreTest.Verdict){
+            case AxisVerdict.Deuteranopia:
+                // Deuteranopia
+                tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Deuteranopia);
+                isAffectedByColorDeficiency = true;
+                break;
+            case AxisVerdict.Protanopia:
+                // Protanopia
+                tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Protanopia);
+                isAffectedByColorDeficiency = true;
+                break;
+            case AxisVerdict.Probable_BY:
+                // Tritanopia
+                tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Tritanopia);
+                isAffectedByColorDeficiency = true; 
+                break;
+            case AxisVerdict.Inconclusive:
+                default:
+                    tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Normal);
+                    isAffectedByColorDeficiency = false;
+                break;
+        }
         ResetGrid();
     }
 }

@@ -19,7 +19,8 @@ public class FilterManager : MonoBehaviour
         // chiamare la funzione di gridManager -> GenerateGrid (che verrà lanciato con il nuovo array)
 
 
-        Debug.Log("############ result in Applica filtro: \n"+resultPreTest.TotalTES);
+        Debug.Log("############ result in Applica filtro: \n" + resultPreTest.TotalTES);
+        Debug.Log("############ result in Applica filtro: \n" + resultPreTest.Verdict);
     }
 
     public void ViewDiffTesResults(TesResult resultPreFiltro, TesResult resultPostFiltro)
@@ -39,4 +40,3 @@ public class FilterManager : MonoBehaviour
 
     }
 }
-

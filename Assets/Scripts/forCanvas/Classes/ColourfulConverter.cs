@@ -24,12 +24,12 @@ public static class ColourfulConverter
     private static readonly IColorConverter<XYZColor, LMSColor> xyzToLMSConverter =
         new ConverterBuilder()
             .FromXYZ(Illuminants.D65)
-            .ToLMS() // XYZ -> LMS
+            .ToLMS(Illuminants.D65)
             .Build();
 
-    private static readonly IColorConverter<LMSColor, XYZColor> lmsToXYXConverter =
+    private static readonly IColorConverter<LMSColor, XYZColor> lmsToXYZConverter =
         new ConverterBuilder()
-            .FromLMS() // LMS -> XYZ
+            .FromLMS(Illuminants.D65) 
             .ToXYZ(Illuminants.D65)
             .Build();
 
@@ -98,7 +98,7 @@ public static class ColourfulConverter
 
     public static RGBColor ConvertLmsToRgb(LMSColor lmsColor)
     {
-        XYZColor xyzColor = lmsToXYXConverter.Convert(lmsColor);
+        XYZColor xyzColor = lmsToXYZConverter.Convert(lmsColor);
         LinearRGBColor linearRgb = xyzToLinearRGBConverter.Convert(xyzColor);
         return linearRGBToRgbConverter.Convert(linearRgb);
     }
