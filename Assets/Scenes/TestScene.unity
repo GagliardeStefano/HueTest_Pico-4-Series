@@ -270,7 +270,7 @@ GameObject:
   - component: {fileID: 13864397}
   m_Layer: 5
   m_Name: FiltroButton
-  m_TagString: Untagged
+  m_TagString: FiltroButton
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2095,6 +2095,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae976dad5a216964d97e8b1baa9e5ba8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  filterButton: {fileID: 13864395}
+  GridManager: {fileID: 2124734639}
   reportText: {fileID: 547644775}
   axisColorRG: {r: 0.9, g: 0.23, b: 0.2, a: 1}
   axisColorBY: {r: 0.2, g: 0.6, b: 0.9, a: 1}
@@ -4903,6 +4905,7 @@ MonoBehaviour:
   thickness: 0.01
   outlineWidth: 3
   TextProgressPage: {fileID: 11541675}
+  TextTitle: {fileID: 631768386}
   ResultCalculator: {fileID: 1936432577}
   pageNumTutorial: 0
 --- !u!222 &2124734642

@@ -5,6 +5,7 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 
+
 [Serializable]
 public enum PageSection
 {
@@ -31,6 +32,11 @@ public class PageDefinition
 
 public class TesReportUI : MonoBehaviour
 {
+    public GameObject filterButton;
+    private TextMeshProUGUI filterButtonText;
+
+    public GameObject GridManager;
+
     [Header("UI")]
     public TextMeshProUGUI reportText;
 
@@ -58,6 +64,7 @@ public class TesReportUI : MonoBehaviour
 
         BuildRenderedPages(result);
         ShowPage(startPage);
+
     }
 
     public void ShowPage(int pageIndex)
@@ -79,7 +86,19 @@ public class TesReportUI : MonoBehaviour
     // builds all pages in memory, one per PageDefinition
     private void BuildRenderedPages(TesResult r)
     {
-        var resultPages = new List<string>();
+        bool isAffected = GridManager.GetComponent<GridManager>().IsAffected();
+        filterButtonText = filterButton.GetComponentInChildren<TextMeshProUGUI>();
+
+        if (isAffected)
+        {
+            filterButtonText.text = "Rimuovi filtro";
+        }
+        else
+        {
+            filterButtonText.text = "Applica filtro";
+        }
+
+            var resultPages = new List<string>();
 
         foreach (var pageDef in Pages)
         {

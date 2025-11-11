@@ -25,6 +25,9 @@ public class GridManager : MonoBehaviour
     private List<List<GameObject>> tilesByRow; // Lista di liste per organizzare le tiles per riga
 
     public TextMeshProUGUI TextProgressPage;
+    public TextMeshProUGUI TextTitle;
+
+    private string titleTest = "\r\nGUIDA: Disponi i colori in base alla tonalità in ogni riga trascinando e rilasciando le caselle. Il primo e l'ultimo colore delle righe sono fissi.\r\nClicca su \"VERIFICA\" per vedere il risultato. \r\n"; 
 
     private readonly Dictionary<string, Color> tileColorDict = new Dictionary<string, Color>
     {
@@ -80,7 +83,7 @@ public class GridManager : MonoBehaviour
 
     public Dictionary<string, Vector3> InitialTilePositions;
 
-    private bool isAffectedByColorDeficiency;
+    private bool isAffectedByColorDeficiency = false;
     public GameObject ResultCalculator;
 
     private TesResult resultPreTest;
@@ -96,9 +99,20 @@ public class GridManager : MonoBehaviour
     public void ResetGrid()
     {
         SwitchScene.Instance.ShowCanvasHueTest();
+
+        if(isAffectedByColorDeficiency)
+            TextTitle.text = "Filtro Applicato." + titleTest;
+        else
+            TextTitle.text = "Test Finale." + titleTest;
+
         GenerateGrid(4, 10, 1);
         ShuffleTilesByRow();
         InitialTilePositions = GetMovableTilePositions();
+    }
+
+    public bool IsAffected()
+    {
+        return isAffectedByColorDeficiency;
     }
 
     public void ClearAllRows()
@@ -374,28 +388,36 @@ public class GridManager : MonoBehaviour
         tileColorCorrectedDict.Clear();
         resultPreTest = ResultCalculator.GetComponent<ResultTestCalculator>().GetTesResultPreTest();
         Debug.Log("############ result in SetColorDeficiency: \n" + resultPreTest.Verdict);
-        switch(resultPreTest.Verdict){
-            case AxisVerdict.Deuteranopia:
-                // Deuteranopia
-                tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Deuteranopia);
-                isAffectedByColorDeficiency = true;
-                break;
-            case AxisVerdict.Protanopia:
-                // Protanopia
-                tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Protanopia);
-                isAffectedByColorDeficiency = true;
-                break;
-            case AxisVerdict.Probable_BY:
-                // Tritanopia
-                tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Tritanopia);
-                isAffectedByColorDeficiency = true; 
-                break;
-            case AxisVerdict.Inconclusive:
+
+        if (isAffectedByColorDeficiency)
+        {
+            isAffectedByColorDeficiency = false;
+        }
+        else
+        {
+            switch(resultPreTest.Verdict){
+                case AxisVerdict.Deuteranopia:
+                    // Deuteranopia
+                    tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Deuteranopia);
+                    isAffectedByColorDeficiency = true;
+                    break;
+                case AxisVerdict.Protanopia:
+                    // Protanopia
+                    tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Protanopia);
+                    isAffectedByColorDeficiency = true;
+                    break;
+                case AxisVerdict.Probable_BY:
+                    // Tritanopia
+                    tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Tritanopia);
+                    isAffectedByColorDeficiency = true; 
+                    break;    
                 default:
                     tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Normal);
                     isAffectedByColorDeficiency = false;
-                break;
+                    break;
+            }
         }
+
         ResetGrid();
     }
 }
