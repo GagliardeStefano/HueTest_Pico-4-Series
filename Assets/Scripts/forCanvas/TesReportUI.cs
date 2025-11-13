@@ -5,7 +5,6 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 
-
 [Serializable]
 public enum PageSection
 {
@@ -26,7 +25,7 @@ public class PageDefinition
     [Tooltip("Sezioni da includere in questa pagina (verranno concatenate nell'ordine specificato)")]
     public List<PageSection> sections = new() { PageSection.Header, PageSection.Summary };
 
-    [TextArea(3, 6), Tooltip("Testo libero (usato solo se la sezione CustomText � selezionata)")]
+    [TextArea(3, 6), Tooltip("Testo libero (usato solo se la sezione CustomText è selezionata)")]
     public string customText = "";
 }
 
@@ -38,7 +37,8 @@ public class TesReportUI : MonoBehaviour
     public GameObject GridManager;
 
     [Header("UI")]
-    public TextMeshProUGUI reportText;
+    public TextMeshProUGUI reportText;         // canvas principale
+    public TextMeshProUGUI reportTextFilter;   // canvas filtrata
 
     [Header("Formatting (Inspector-editable)")]
     public Color axisColorRG = new(0.9f, 0.23f, 0.2f);
@@ -49,11 +49,16 @@ public class TesReportUI : MonoBehaviour
     [Header("Pages (define exactly which sections you want per page)")]
     public List<PageDefinition> Pages = new();
 
-    // runtime
-    private string[] renderedPages;
-    private int currentPage;
+    // runtime: due array/distinte pagine
+    private string[] renderedPagesMain;
+    private string[] renderedPagesFilter;
 
-    // Public API: Call this to generate pages from the TesResult and display the first one
+    private int currentPageMain;
+    private int currentPageFilter;
+
+    // Public API
+
+    // Mostra solo report principale (nessun filtro)
     public void ShowReport(TesResult result, int startPage = 0)
     {
         if (reportText == null)
@@ -62,49 +67,114 @@ public class TesReportUI : MonoBehaviour
             return;
         }
 
-        BuildRenderedPages(result);
-        ShowPage(startPage);
+        // aggiorna stato del bottone filtro (se presente)
+        UpdateFilterButtonLabel();
 
+        // costruisci solo le pagine principali
+        renderedPagesMain = BuildRenderedPagesForResult(result);
+        // reset filtro
+        renderedPagesFilter = null;
+
+        currentPageMain = Mathf.Clamp(startPage, 0, (renderedPagesMain?.Length ?? 1) - 1);
+        currentPageFilter = 0;
+
+        ShowMainPage(currentPageMain);
+
+        // se esiste, pulisco la canvas filtro (mostro messaggio)
+        if (reportTextFilter != null)
+            reportTextFilter.text = "<i>Filtro non applicato.</i>";
     }
 
-    public void ShowPage(int pageIndex)
+    // Mostra report principale + report filtrato (quando l'utente conferma test con filtro)
+    public void ShowReport(TesResult result, TesResult resultFilter, int startPage = 0)
     {
-        if (renderedPages == null || renderedPages.Length == 0)
+        if (reportText == null)
+        {
+            Debug.LogError("[TesReportUI_CustomPages] reportText non assegnato!");
+            return;
+        }
+
+        // aggiorna stato del bottone filtro (se presente)
+        UpdateFilterButtonLabel();
+
+        renderedPagesMain = BuildRenderedPagesForResult(result);
+        renderedPagesFilter = BuildRenderedPagesForResult(resultFilter);
+
+        currentPageMain = Mathf.Clamp(startPage, 0, (renderedPagesMain?.Length ?? 1) - 1);
+        currentPageFilter = Mathf.Clamp(startPage, 0, (renderedPagesFilter?.Length ?? 1) - 1);
+
+        ShowMainPage(currentPageMain);
+        ShowFilterPage(currentPageFilter);
+    }
+
+    private void UpdateFilterButtonLabel()
+    {
+        if (filterButton == null) return;
+        filterButtonText = filterButton.GetComponentInChildren<TextMeshProUGUI>();
+        bool isAffected = false;
+        if (GridManager != null)
+        {
+            var gm = GridManager.GetComponent<GridManager>();
+            if (gm != null)
+                isAffected = gm.IsAffected();
+        }
+
+        if (filterButtonText != null)
+        {
+            filterButtonText.text = isAffected ? "Rimuovi filtro" : "Applica filtro";
+        }
+    }
+
+    // Metodi per navigare le pagine principali
+    public void ShowMainPage(int pageIndex)
+    {
+        if (renderedPagesMain == null || renderedPagesMain.Length == 0)
         {
             reportText.text = "<i>No report generated.</i>";
             return;
         }
-        currentPage = Mathf.Clamp(pageIndex, 0, renderedPages.Length - 1);
-        reportText.text = renderedPages[currentPage];
+
+        currentPageMain = Mathf.Clamp(pageIndex, 0, renderedPagesMain.Length - 1);
+        reportText.text = renderedPagesMain[currentPageMain];
     }
 
-    public void NextPage() => ShowPage(currentPage + 1);
-    public void PrevPage() => ShowPage(currentPage - 1);
-    public int PageCount => renderedPages?.Length ?? 0;
-    public int CurrentPageIndex => currentPage;
+    public void NextMainPage() => ShowMainPage(currentPageMain + 1);
+    public void PrevMainPage() => ShowMainPage(currentPageMain - 1);
 
-    // builds all pages in memory, one per PageDefinition
-    private void BuildRenderedPages(TesResult r)
+    // Metodi per navigare le pagine filtrate (se presenti)
+    public void ShowFilterPage(int pageIndex)
     {
-        bool isAffected = GridManager.GetComponent<GridManager>().IsAffected();
-        filterButtonText = filterButton.GetComponentInChildren<TextMeshProUGUI>();
+        if (reportTextFilter == null)
+            return;
 
-        if (isAffected)
+        if (renderedPagesFilter == null || renderedPagesFilter.Length == 0)
         {
-            filterButtonText.text = "Rimuovi filtro";
-        }
-        else
-        {
-            filterButtonText.text = "Applica filtro";
+            reportTextFilter.text = "<i>No report generated (filtro).</i>";
+            return;
         }
 
-            var resultPages = new List<string>();
+        currentPageFilter = Mathf.Clamp(pageIndex, 0, renderedPagesFilter.Length - 1);
+        reportTextFilter.text = renderedPagesFilter[currentPageFilter];
+    }
+
+    public void NextFilterPage() => ShowFilterPage(currentPageFilter + 1);
+    public void PrevFilterPage() => ShowFilterPage(currentPageFilter - 1);
+
+    // proprietà utili
+    public int PageCountMain => renderedPagesMain?.Length ?? 0;
+    public int PageCountFilter => renderedPagesFilter?.Length ?? 0;
+    public int CurrentPageIndexMain => currentPageMain;
+    public int CurrentPageIndexFilter => currentPageFilter;
+
+    // builds all pages in memory for a single TesResult and returns them (no UI side-effects)
+    private string[] BuildRenderedPagesForResult(TesResult r)
+    {
+        var resultPages = new List<string>();
 
         foreach (var pageDef in Pages)
         {
             var sb = new StringBuilder();
 
-            // each section is built with the corresponding function
             foreach (var sec in pageDef.sections)
             {
                 switch (sec)
@@ -139,14 +209,13 @@ public class TesReportUI : MonoBehaviour
             resultPages.Add(sb.ToString().TrimEnd());
         }
 
-        // fallback: if you have no pages defined, create one with summary
+        // fallback: se non ci sono pagine definite
         if (resultPages.Count == 0)
         {
             resultPages.Add(BuildHeader() + "\n\n" + BuildSummary(r));
         }
 
-        renderedPages = resultPages.ToArray();
-        currentPage = 0;
+        return resultPages.ToArray();
     }
 
     #region Section builders
@@ -178,7 +247,7 @@ public class TesReportUI : MonoBehaviour
                 _ => Color.green,
             };
             sb.AppendLine();
-            sb.AppendFormat("<b>Risultato:</b> {0}\n", WrapColor(r.VerdictMessage, vCol));
+            sb.AppendFormat("<b>Risultato:</b> {0}\n", WrapColor(r.VerdictMessage, (Color32)vCol));
         }
 
 
@@ -226,12 +295,12 @@ public class TesReportUI : MonoBehaviour
     private string BuildInterpretation(TesResult r)
     {
         if (r.TotalTES == 0)
-            return WrapColor("Tutto bene: non sono stati rilevati errori significativi", summaryColor) + "\n";
+            return WrapColor("Tutto bene: non sono stati rilevati errori significativi", (Color32)summaryColor) + "\n";
         if (r.PctRG > r.PctBY * 1.2f)
-            return WrapColor("compromissione dell'asse rosso-verde", axisColorRG) + "\n";
+            return WrapColor("compromissione dell'asse rosso-verde", (Color32)axisColorRG) + "\n";
         if (r.PctBY > r.PctRG * 1.2f)
-            return WrapColor("compromissione dell'asse blu-giallo", axisColorBY) + "\n";
-        return WrapColor("Errori misti o inconcludenti", axisColorNeutral) + "\n";
+            return WrapColor("compromissione dell'asse blu-giallo", (Color32)axisColorBY) + "\n";
+        return WrapColor("Errori misti o inconcludenti", (Color32)axisColorNeutral) + "\n";
     }
 
     #endregion

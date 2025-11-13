@@ -11,6 +11,7 @@ public class SwitchScene : MonoBehaviour
     public GameObject canvasTutorial;
     public GameObject canvasHueTest;
     public GameObject canvasOutput;
+    public GameObject canvasPreFilterOutput;
 
     private void Awake() 
     {
@@ -28,6 +29,7 @@ public class SwitchScene : MonoBehaviour
         canvasTutorial.SetActive(true);
         canvasHueTest.SetActive(false);
         canvasOutput.SetActive(false);
+        canvasPreFilterOutput.SetActive(false);
     }
 
     public void ShowCanvasHueTest()
@@ -35,6 +37,7 @@ public class SwitchScene : MonoBehaviour
         canvasTutorial.SetActive(false);
         canvasHueTest.SetActive(true);
         canvasOutput.SetActive(false);
+        canvasPreFilterOutput.SetActive(false);
     }
 
     public void ShowCanvasOutput()
@@ -42,6 +45,14 @@ public class SwitchScene : MonoBehaviour
         canvasTutorial.SetActive(false);
         canvasHueTest.SetActive(false);
         canvasOutput.SetActive(true);
+        canvasPreFilterOutput.SetActive(false);
     }
 
+    public void ShowCanvasPreFilteredOutput()
+    {
+        canvasTutorial.SetActive(false);
+        canvasHueTest.SetActive(false);
+        canvasOutput.SetActive(true);
+        canvasPreFilterOutput.SetActive(true);
+    }
 }

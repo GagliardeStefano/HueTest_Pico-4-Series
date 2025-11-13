@@ -18,12 +18,16 @@ public class ResultTestCalculator : MonoBehaviour
 
     private GridManager builder;
 
-    private TesResult result;
+
+    public static Dictionary<string, TesResult> dictTesResults;
+    public TesResult result;
 
     void Start()
     {
-        result = new TesResult();
         builder = TestContainer.GetComponent<GridManager>();
+
+        if (dictTesResults == null)
+            dictTesResults = new Dictionary<string, TesResult>();
     }
 
     public void CalculateOutputTest()
@@ -42,8 +46,32 @@ public class ResultTestCalculator : MonoBehaviour
         Debug.Log($"Generato il result e total tes: {result.TotalTES}");
         ComputeSeverityMetrics(result);
         GridManager.GetComponent<GridManager>().ClearAllRows();
-        SwitchScene.Instance.ShowCanvasOutput();
-        FindObjectOfType<TesReportUI>().ShowReport(result);
+
+        if (GridManager.GetComponent<GridManager>().IsAffected())
+        {
+            Debug.Log($"filtro: {result.TotalTES}");
+            SwitchScene.Instance.ShowCanvasPreFilteredOutput();
+            dictTesResults["filter"] = result;
+        }
+        else
+        {
+            Debug.Log($"original: {result.TotalTES}");
+            SwitchScene.Instance.ShowCanvasOutput();
+            dictTesResults["original"] = result;
+        }
+
+        
+        if (dictTesResults.ContainsKey("original"))
+        {
+            Debug.Log("DIZIONARIO: original: " + dictTesResults["original"] + "\n");
+            FindObjectOfType<TesReportUI>().ShowReport(dictTesResults["original"]);
+        }
+
+        if (dictTesResults.ContainsKey("filter"))
+        {
+            Debug.Log("DIZIONARIO: filter: " + dictTesResults["filter"]);
+            FindObjectOfType<TesReportUI>().ShowReport(dictTesResults["original"], dictTesResults["filter"]);
+        }
     }
 
     public TesResult GetTesResultPreTest()
