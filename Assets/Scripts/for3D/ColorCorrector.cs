@@ -49,7 +49,7 @@ public static class ColorCorrector
         {
             return originalColor; // Nessuna correzione necessaria
         }
-        LMSColor originalLms = ColourfulConverter.ConvertRgbToLms(ColourfulConverter.UnityColorToRgbColor(originalColor));
+        LMSColor originalLms = ColourfulConverter.UnityToLms(originalColor);
         //simula come il colore viene visto da un daltonico
         LMSColor simulatedLms = SimulateDichromacy(originalColor, type);
 
@@ -62,15 +62,12 @@ public static class ColorCorrector
         Vector3 correctedLmsVec = ApplyFidanerCorrection(originalLmsVec, errorLms, type);
         LMSColor correctedLms = ColourfulConverter.Vector3ToLmsColor(correctedLmsVec);
 
-        // 5. Riconverti il colore corretto LMS in sRGB
-        RGBColor correctedRgb = ColourfulConverter.ConvertLmsToRgb(correctedLms);
-
-        // 6. Converte sRGB in Unity Color (gestendo spazio lineare/gamma)
-        return ColourfulConverter.RgbColorToUnityColor(correctedRgb, originalColor.a);
+        // 5. Riconverti il colore corretto LMS in RGB
+        return ColourfulConverter.LmsToUnity(correctedLms);
     }
     /// <summary>
     /// Simula come un colore viene percepito da un utente con una specifica dicromia.
-    /// Segue la pipeline: UnityColor -> sRGB -> Lineare RGB -> XYZ -> LMS -> Simula -> LMS -> XYZ -> Lineare RGB -> sRGB -> UnityColor
+    /// Segue la pipeline: UnityColor (Linear) -> XYZ -> LMS -> Simula -> LMS
     /// </summary>
     /// <param name="originalColor">Il colore originale (UnityEngine.Color).</param>
     /// <param name="type">Il tipo di dicromia da simulare.</param>
@@ -78,10 +75,7 @@ public static class ColorCorrector
     public static LMSColor SimulateDichromacy(Color originalColor, AnomalyType type)
     {
         // Converte da Unity Color a Colourful RGBColor (sRGB)
-        RGBColor rgbColor = ColourfulConverter.UnityColorToRgbColor(originalColor);
-
-        // Converte in LMS
-        LMSColor lmsColor = ColourfulConverter.ConvertRgbToLms(rgbColor);
+        LMSColor lmsColor = ColourfulConverter.UnityToLms(originalColor);
 
         // Applica la matrice di simulazione LMS
         double[,] simMatrix = GetSimulationMatrixLMS(type);

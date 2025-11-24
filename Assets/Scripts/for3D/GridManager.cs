@@ -1,129 +1,144 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 
 public class GridManager : MonoBehaviour
 {
-    [Header("Prefab del Cube (3D con XRGrabInteractable)")]
+    [Header("Configurazione Dati")]
+    public TextAsset colorCsv; // Trascina qui il file Farnsworth_Unity_Colors.csv
+
+    [Header("Configurazione Righe Standard")]
+    // Definisce la lunghezza delle righe: { Riga1, Riga2, Riga3, Riga4 }
+    // Totale 43 colori: 11 + 10 + 11 + 11
+    public int[] standardRowLengths = new int[] { 11, 10, 11, 11 };
+
+    [Header("Prefab")]
     public GameObject cubePrefab;
 
     [Header("Dimensioni griglia")]
-    public float spacing = 1.25f; // distanza tra i cube
-
-    [Header("Altezza sopra il plane")]
-    public float yOffset = 0.01f; // leggero offset per non affondare i cube
-
-    [Header("Dimensione dei cube")]
-    public float cubeSize = 0.2f; // lato quadrato
-    public float thickness = 0.01f; // spessore minimo sul piano
+    public float spacing = 1.25f;
+    public float yOffset = 0.01f;
+    public float cubeSize = 0.2f;
+    public float thickness = 0.01f;
 
     [Header("Outline Settings")]
-    public float outlineWidth = 3f; // spessore dell'outline per inizio/fine riga
+    public float outlineWidth = 3f;
 
-    private List<List<GameObject>> tilesByRow; // Lista di liste per organizzare le tiles per riga
-
+    private List<List<GameObject>> tilesByRow;
     public TextMeshProUGUI TextProgressPage;
     public TextMeshProUGUI TextTitle;
 
-    private string titleTest = "\r\nGUIDA: Disponi i colori in base alla tonalità in ogni riga trascinando e rilasciando le caselle. Il primo e l'ultimo colore delle righe sono fissi.\r\nClicca su \"VERIFICA\" per vedere il risultato. \r\n"; 
+    private string titleTest = "\r\nGUIDA: Disponi i colori in base alla tonalità in ogni riga. Il primo e l'ultimo colore sono fissi.\r\nClicca su \"VERIFICA\" per vedere il risultato.\r\n";
 
-    private readonly Dictionary<string, Color> tileColorDict = new Dictionary<string, Color>
-    {
-        // Riga 1
-        { "1-1",  new Color32(132,132,163,255) },
-        { "1-2",  new Color32(141,133,163,255) },
-        { "1-3",  new Color32(148,131,160,255) },
-        { "1-4",  new Color32(153,129,157,255) },
-        { "1-5",  new Color32(159,127,152,255) },
-        { "1-6",  new Color32(169,121,139,255) },
-        { "1-7",  new Color32(174,119,135,255) },
-        { "1-8",  new Color32(177,117,127,255) },
-        { "1-9",  new Color32(179,117,122,255) },
-        { "1-10", new Color32(179,118,115,255) },
+    // Dizionario per accesso tramite chiave "Riga-Colonna"
+    private Dictionary<string, Color> tileColorDict = new Dictionary<string, Color>();
+    // Lista lineare ordinata per la generazione (conterrà le chiavi nell'ordine di creazione della griglia)
+    private List<string> _linearKeys = new List<string>();
 
-        // Riga 2
-        { "2-1",  new Color32(78,150,137,255) },
-        { "2-2",  new Color32(76,150,145,255) },
-        { "2-3",  new Color32(74,150,150,255) },
-        { "2-4",  new Color32(74,150,152,255) },
-        { "2-5",  new Color32(82,148,159,255) },
-        { "2-6",  new Color32(96,144,165,255) },
-        { "2-7",  new Color32(104,143,167,255) },
-        { "2-8",  new Color32(108,138,166,255) },
-        { "2-9",  new Color32(116,137,167,255) },
-        { "2-10", new Color32(123,132,163,255) },
-
-        // Riga 3
-        { "3-1",  new Color32(151,145,75,255) },
-        { "3-2",  new Color32(141,147,82,255) },
-        { "3-3",  new Color32(134,149,92,255) },
-        { "3-4",  new Color32(126,151,96,255) },
-        { "3-5",  new Color32(124,149,103,255) },
-        { "3-6",  new Color32(105,154,113,255) },
-        { "3-7",  new Color32(100,154,118,255) },
-        { "3-8",  new Color32(91,148,122,255) },
-        { "3-9",  new Color32(88,148,128,255) },
-        { "3-10", new Color32(82,150,135,255) },
-
-        // Riga 4
-        { "4-1",  new Color32(178,118,111,255) },
-        { "4-2",  new Color32(177,116,102,255) },
-        { "4-3",  new Color32(174,114,95,255) },
-        { "4-4",  new Color32(168,116,90,255) },
-        { "4-5",  new Color32(168,116,82,255) },
-        { "4-6",  new Color32(168,121,78,255) },
-        { "4-7",  new Color32(169,126,76,255) },
-        { "4-8",  new Color32(167,130,68,255) },
-        { "4-9",  new Color32(162,137,70,255) },
-        { "4-10", new Color32(157,142,72,255) }
-    };
     private Dictionary<string, Color> tileColorCorrectedDict = new Dictionary<string, Color>();
-
     public Dictionary<string, Vector3> InitialTilePositions;
 
     private bool isAffectedByColorDeficiency = false;
     public GameObject ResultCalculator;
 
-    private TesResult resultPreTest;
-
-
     public int pageNumTutorial = 0;
+
     public void Start()
     {
+        LoadColorsFromCSV();
         GenerateTutorialGrid();
         InitialTilePositions = GetMovableTilePositions();
         SwitchScene.Instance.ShowCanvasTutorial();
     }
+
+    // Lettura dei colori dal file
+    void LoadColorsFromCSV()
+    {
+        if (colorCsv == null)
+        {
+            Debug.LogError("CSV File non assegnato in GridManager!");
+            return;
+        }
+
+        tileColorDict.Clear();
+        _linearKeys.Clear();
+
+        string[] lines = colorCsv.text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+        // Configuriamo il parser per riempire le righe partendo dalla 4 (Fondo) a risalire alla 1 (Cima)
+        // Questo perché generiamo la griglia dal basso, e leggiamo il file dal fondo.
+        int currentRow = 4;
+        int currentCountInRow = 0;
+
+        // L'indice dell'array standardRowLengths è 0-based: 0=Riga1, 3=Riga4.
+        // Quindi per Riga4 useremo index 3.
+        int standardArrIndex = 3;
+
+        // Iteriamo il file AL CONTRARIO (dal fondo verso l'inizio)
+        // Saltiamo la riga 0 che è l'header
+        for (int i = lines.Length - 1; i > 0; i--)
+        {
+            string[] values = lines[i].Split(',');
+            if (values.Length < 8) continue;
+
+            try
+            {
+                // Parsing colori (R_Linear, G_Linear, B_Linear)
+                float r = float.Parse(values[5], CultureInfo.InvariantCulture);
+                float g = float.Parse(values[6], CultureInfo.InvariantCulture);
+                float b = float.Parse(values[7], CultureInfo.InvariantCulture);
+                Color colorLinear = new Color(r, g, b, 1.0f);
+
+                // Generiamo la chiave semantica "Riga-Colonna"
+                currentCountInRow++;
+                string key = $"{currentRow}-{currentCountInRow}";
+
+                // Salviamo nel dizionario
+                tileColorDict[key] = colorLinear;
+
+                // Aggiungiamo alla lista lineare.
+                // Nota: Siccome generiamo la griglia partendo dalla Riga 4, e stiamo leggendo i colori della Riga 4,
+                // l'ordine di _linearKeys sarà [ColoriRiga4, ColoriRiga3, ...]. Perfetto per il loop di generazione.
+                _linearKeys.Add(key);
+
+                // Gestione cambio riga (a risalire: 4 -> 3 -> 2 -> 1)
+                if (standardArrIndex >= 0)
+                {
+                    if (currentCountInRow >= standardRowLengths[standardArrIndex])
+                    {
+                        currentRow--;           // Passa alla riga sopra (es. da 4 a 3)
+                        standardArrIndex--;     // Passa all'indice array precedente
+                        currentCountInRow = 0;  // Reset contatore colonne
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"Errore parsing riga CSV {i}: {e.Message}");
+            }
+        }
+
+        Debug.Log($"Caricati {_linearKeys.Count} colori (Dal fondo).");
+    }
+
     public void ResetGrid()
     {
         SwitchScene.Instance.ShowCanvasHueTest();
 
-        if(isAffectedByColorDeficiency)
+        if (isAffectedByColorDeficiency)
             TextTitle.text = "Filtro Applicato." + titleTest;
         else
             TextTitle.text = "Test Finale." + titleTest;
 
-        GenerateGrid(4, 10, 1);
+        GenerateGrid(standardRowLengths, 1);
+
         ShuffleTilesByRow();
         InitialTilePositions = GetMovableTilePositions();
     }
 
-    public bool IsAffected()
-    {
-        return isAffectedByColorDeficiency;
-    }
-
-    public void ClearAllRows()
-    {
-        foreach (Transform child in transform)
-        {
-            Destroy(child.gameObject);
-        }
-    }
-
-    // Genera griglia 2x5 saltando colori ogni 4
     public void GenerateTutorialGrid()
     {
         pageNumTutorial++;
@@ -131,132 +146,96 @@ public class GridManager : MonoBehaviour
         switch (pageNumTutorial)
         {
             case 1:
+                // CASE 1: Griglia Custom (Invariata)
                 transform.position = new Vector3(-3.38f, 7.76f, -0.5f);
                 string[] tutorialColors = { "4-1", "4-4", "4-7", "4-10", "3-3", "3-6", "3-9" };
                 GenerateCustomGrid(1, tutorialColors);
+                TextProgressPage.text = "1/2";
                 break;
 
             case 2:
+                // CASE 2: Griglia 2 righe (11 e 10), prendendo i colori ogni 2
                 transform.position = new Vector3(-5.64f, 7.2f, -0.5f);
-                GenerateGrid(2, 10, 2);
-                Debug.Log("Initial tile position " + InitialTilePositions);
+                // Generiamo una griglia con le lunghezze della riga 4 e riga 3 (le prime due generate)
+                // Riga 4 = 11 cols, Riga 3 = 11 cols (dal config sopra: 11, 10, 11, 11 -> R4=11, R3=11)
+                // Aspetta, R3 è 11 o 10? 
+                // CSV: R1(11), R2(10), R3(11), R4(11). -> Sì.
+                // Quindi per il tutorial generiamo le prime due righe "dal basso": 11 e 11.
+                GenerateGrid(new int[] { 11, 11 }, 2);
+                TextProgressPage.text = "2/2";
                 break;
 
             default:
+                // DEFAULT: Test completo
                 transform.position = new Vector3(-5.64f, 5.69f, -0.5f);
                 SwitchScene.Instance.ShowCanvasHueTest();
-                GenerateGrid(4, 10, 1);
+                GenerateGrid(standardRowLengths, 1);
                 break;
         }
-        TextProgressPage.text = $"{pageNumTutorial}/2";
+
         ShuffleTilesByRow();
         InitialTilePositions = GetMovableTilePositions();
     }
 
 
-    /// <summary>
-    /// Genera una griglia di dimensioni rows x columns.
-    /// La selezione del colore segue l'ordine delle righe personalizzato: 4 -> 1 -> 2 -> 3.
-    /// 'jump': Salta gli INDICI dei COLORI all'interno della sequenza personalizzata.
-    /// </summary>
-    /// <summary>
-    /// Genera una griglia di dimensioni rows x columns.
-    /// Se jump = 1, l'ordine dei colori è sequenziale (riga 1->2->3->4).
-    /// Se jump != 1, l'ordine è personalizzato (riga 4->1->2->3) e applica il salto.
-    /// </summary>
-    public void GenerateGrid(int rows, int columns, int jump)
+    // --- GENERAZIONE GRIGLIA ---
+    public void GenerateGrid(int[] rowsConfig, int jump)
     {
         ClearAllRows();
 
-        if (cubePrefab == null)
-        {
-            Debug.LogError("Nessun prefab assegnato al CubeGridManager!");
-            return;
-        }
+        if (cubePrefab == null) return;
 
         tilesByRow = new List<List<GameObject>>();
-        for (int i = 0; i < rows; i++)
+        for (int i = 0; i < rowsConfig.Length; i++)
         {
             tilesByRow.Add(new List<GameObject>());
         }
 
-        int globalTileIndex = 0;
+        int globalListIndex = 0;
 
-        for (int row = 0; row < rows; row++)
+        for (int row = 0; row < rowsConfig.Length; row++)
         {
-            for (int col = 0; col < columns; col++)
+            int colCount = rowsConfig[row];
+
+            for (int col = 0; col < colCount; col++)
             {
+                int targetIndex = globalListIndex * jump;
+                if (targetIndex >= _linearKeys.Count) targetIndex = _linearKeys.Count - 1;
+
                 Vector3 localPos = new Vector3(col * spacing, yOffset, (-row * spacing) - 0.2f);
                 GameObject tile = Instantiate(cubePrefab);
                 tile.transform.SetParent(transform, worldPositionStays: false);
                 tile.transform.localPosition = localPos;
 
-                string colorIndex;
-
-                // --- LOGICA CONDIZIONALE PER LA SELEZIONE DEL COLORE ---
-                if (jump == 1)
-                {
-                    // CASO 1: JUMP = 1 -> Ordine originale sequenziale
-                    int linearColorIndex = globalTileIndex; // Nessun salto
-
-                    int colorRow = (linearColorIndex / 10) + 1;
-                    int colorCol = (linearColorIndex % 10) + 1;
-
-                    // Limita alle 4 righe disponibili
-                    if (colorRow > 4)
-                    {
-                        colorRow = 4;
-                        colorCol = 10;
-                    }
-                    colorIndex = $"{colorRow}-{colorCol}";
-                }
-                else
-                {
-                    // CASO 2: JUMP != 1 -> Ordine personalizzato con salto
-                    int[] rowOrder = { 4, 3, 2, 1 };
-                    int linearColorIndex = globalTileIndex * jump;
-                    int blockIndex = linearColorIndex / 10;
-                    int colorRow = rowOrder[blockIndex % rowOrder.Length];
-                    int colorCol = (linearColorIndex % 10) + 1;
-                    colorIndex = $"{colorRow}-{colorCol}";
-                }
-                // --- FINE LOGICA ---
-
-                if (tileColorDict.ContainsKey(colorIndex))
-                {
-                    SetColor(ref tile, ref colorIndex);
-                }
-                else
-                {
-                    Debug.LogWarning($"Colore non trovato per l'indice: {colorIndex}");
-                }
-
-                globalTileIndex++;
-
                 tile.transform.localRotation = Quaternion.identity;
                 tile.transform.localScale = new Vector3(cubeSize, thickness, cubeSize);
 
-                bool isFirstCol = col == 0;
-                bool isLastCol = col == columns - 1;
+                if (targetIndex >= 0 && targetIndex < _linearKeys.Count)
+                {
+                    string key = _linearKeys[targetIndex];
+                    SetColor(ref tile, ref key);
+                }
 
-                if (isFirstCol)
-                {
-                    tile.name = $"Row{rows - row}_Start";
-                }
-                else if (isLastCol)
-                {
-                    tile.name = $"Row{rows - row}_End";
-                }
+                // Naming
+                // row=0 -> Row 4 (Totale righe - row)
+                // Assumendo 4 righe totali:
+                int visualRowIndex = 4 - row;
+
+                bool isFirst = col == 0;
+                bool isLast = col == colCount - 1;
+
+                if (isFirst) tile.name = $"Row{visualRowIndex}_Start";
+                else if (isLast) tile.name = $"Row{visualRowIndex}_End";
                 else
                 {
-                    tile.name = $"Row{rows - row}_Tile{col}";
+                    tile.name = $"Row{visualRowIndex}_Tile{col}";
                     tile.AddComponent<DirectTileMovement>();
                     if (tile.GetComponent<XRGrabInteractable>() == null)
-                    {
                         tile.AddComponent<XRGrabInteractable>();
-                    }
                     tilesByRow[row].Add(tile);
                 }
+
+                globalListIndex++;
             }
         }
     }
@@ -264,18 +243,10 @@ public class GridManager : MonoBehaviour
     private void GenerateCustomGrid(int rows, string[] colorKeys)
     {
         ClearAllRows();
-
-        if (cubePrefab == null)
-        {
-            Debug.LogError("Nessun prefab assegnato al CubeGridManager!");
-            return;
-        }
+        if (cubePrefab == null) return;
 
         tilesByRow = new List<List<GameObject>>();
-        for (int i = 0; i < rows; i++)
-        {
-            tilesByRow.Add(new List<GameObject>());
-        }
+        for (int i = 0; i < rows; i++) tilesByRow.Add(new List<GameObject>());
 
         for (int row = 0; row < rows; row++)
         {
@@ -286,42 +257,20 @@ public class GridManager : MonoBehaviour
                 tile.transform.SetParent(transform, worldPositionStays: false);
                 tile.transform.localPosition = localPos;
 
-                // Usa direttamente l'indice dell'array per i colori custom
+                tile.transform.localRotation = Quaternion.identity;
+                tile.transform.localScale = new Vector3(cubeSize, thickness, cubeSize);
+
                 string colorKey = colorKeys[col];
-                if (tileColorDict.ContainsKey(colorKey))
-                {
-                    SetColor(ref tile, ref colorKey);
-                }
+                SetColor(ref tile, ref colorKey);
+
+                if (col == 0) tile.name = $"Tutorial_Row{row + 1}_Start";
+                else if (col == colorKeys.Length - 1) tile.name = $"Tutorial_Row{row + 1}_End";
                 else
                 {
-                    Debug.LogWarning($"Colore non trovato: {colorKey}");
-                }
-
-                if (col == 0)
-                {
-                    tile.transform.localRotation = Quaternion.identity;
-                    tile.transform.localScale = new Vector3(cubeSize, thickness, cubeSize);
-                    tile.name = $"Tutorial_Row{rows - row}_Start";
-
-                }
-                else if (col == colorKeys.Length - 1)
-                {
-                    tile.transform.localRotation = Quaternion.identity;
-                    tile.transform.localScale = new Vector3(cubeSize, thickness, cubeSize);
-                    tile.name = $"Tutorial_Row{rows - row}_End";
-                }
-                else
-                {
-                    tile.transform.localRotation = Quaternion.identity;
-                    tile.transform.localScale = new Vector3(cubeSize, thickness, cubeSize);
-                    tile.name = $"Tutorial_Row{rows - row}_Tile{col + 1}";
+                    tile.name = $"Tutorial_Row{row + 1}_Tile{col}";
                     tile.AddComponent<DirectTileMovement>();
-                    XRGrabInteractable tileInteractable = tile.GetComponent<XRGrabInteractable>();
-                    if (tileInteractable == null)
-                    {
-                        tileInteractable = tile.AddComponent<XRGrabInteractable>();
-                    }
-
+                    if (tile.GetComponent<XRGrabInteractable>() == null)
+                        tile.AddComponent<XRGrabInteractable>();
                     tilesByRow[row].Add(tile);
                 }
             }
@@ -333,35 +282,29 @@ public class GridManager : MonoBehaviour
         Renderer renderer = tile.GetComponent<Renderer>();
         if (renderer != null && tileColorDict.ContainsKey(colorIndex))
         {
-            if (isAffectedByColorDeficiency)
+            if (isAffectedByColorDeficiency && tileColorCorrectedDict.ContainsKey(colorIndex))
                 renderer.material.color = tileColorCorrectedDict[colorIndex];
             else
                 renderer.material.color = tileColorDict[colorIndex];
         }
-        else
-        {
-            Debug.LogWarning($"Renderer non trovato o colore mancante per {colorIndex}");
-        }
+    }
+
+    public void ClearAllRows()
+    {
+        foreach (Transform child in transform) Destroy(child.gameObject);
     }
 
     private void ShuffleTilesByRow()
     {
-        // Mescola le tiles di ogni riga separatamente
         for (int row = 0; row < tilesByRow.Count; row++)
         {
             List<GameObject> rowTiles = tilesByRow[row];
-
-            // Fisher-Yates shuffle per ogni riga
             for (int i = 0; i < rowTiles.Count; i++)
             {
                 int randIndex = UnityEngine.Random.Range(i, rowTiles.Count);
-
-                // Scambia le posizioni delle tiles nella griglia
-                Vector3 tempPosition = rowTiles[i].transform.localPosition;
+                Vector3 tempPos = rowTiles[i].transform.localPosition;
                 rowTiles[i].transform.localPosition = rowTiles[randIndex].transform.localPosition;
-                rowTiles[randIndex].transform.localPosition = tempPosition;
-
-                // Scambia anche gli elementi nella lista
+                rowTiles[randIndex].transform.localPosition = tempPos;
                 (rowTiles[i], rowTiles[randIndex]) = (rowTiles[randIndex], rowTiles[i]);
             }
         }
@@ -370,24 +313,22 @@ public class GridManager : MonoBehaviour
     private Dictionary<string, Vector3> GetMovableTilePositions()
     {
         Dictionary<string, Vector3> movableTilePositions = new Dictionary<string, Vector3>();
-
-        // Ottieni tutti i componenti DirectTileMovement (solo cubi movibili)
         DirectTileMovement[] movableTiles = GetComponentsInChildren<DirectTileMovement>();
-
         foreach (DirectTileMovement tileMovement in movableTiles)
         {
             GameObject tile = tileMovement.gameObject;
             movableTilePositions[tile.name] = tile.transform.localPosition;
         }
-
         return movableTilePositions;
     }
 
-    public void SetColorDeficiency() {
+    public void SetColorDeficiency()
+    {
         Debug.Log("Toggle color deficiency");
         tileColorCorrectedDict.Clear();
-        resultPreTest = ResultCalculator.GetComponent<ResultTestCalculator>().GetTesResultPreTest();
-        Debug.Log("############ result in SetColorDeficiency: \n" + resultPreTest.Verdict);
+        if (ResultCalculator == null) return;
+
+        TesResult resultPreTest = ResultCalculator.GetComponent<ResultTestCalculator>().GetTesResultPreTest();
 
         if (isAffectedByColorDeficiency)
         {
@@ -395,98 +336,31 @@ public class GridManager : MonoBehaviour
         }
         else
         {
-            switch(resultPreTest.Verdict){
+            switch (resultPreTest.Verdict)
+            {
                 case AxisVerdict.Deuteranopia:
-                    // Deuteranopia
                     tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Deuteranopia);
                     isAffectedByColorDeficiency = true;
                     break;
                 case AxisVerdict.Protanopia:
-                    // Protanopia
                     tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Protanopia);
                     isAffectedByColorDeficiency = true;
                     break;
                 case AxisVerdict.Probable_BY:
-                    // Tritanopia
                     tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Tritanopia);
-                    isAffectedByColorDeficiency = true; 
-                    break;    
+                    isAffectedByColorDeficiency = true;
+                    break;
                 default:
                     tileColorCorrectedDict = ColorCorrector.GetNewTileColorDic(tileColorDict, ColorCorrector.AnomalyType.Normal);
                     isAffectedByColorDeficiency = false;
                     break;
             }
         }
-
         ResetGrid();
     }
-}
 
-// Componente per vincolare il movimento (alternativa a DirectTileMovement)
-public class ConstrainedMovement : MonoBehaviour
-{
-    private Vector3 originalPosition;
-    private XRGrabInteractable grabInteractable;
-    public float snapSpacing = 1.25f;
-    public int minColumn = 1;
-    public int maxColumn = 8;
-
-    void Start()
+    public bool IsAffected()
     {
-        originalPosition = transform.localPosition;
-        grabInteractable = GetComponent<XRGrabInteractable>();
-
-        if (grabInteractable != null)
-        {
-            grabInteractable.selectEntered.AddListener(OnGrabStart);
-            grabInteractable.selectExited.AddListener(OnGrabEnd);
-        }
-    }
-
-    private void OnGrabStart(SelectEnterEventArgs args)
-    {
-        // Salva la posizione corrente come riferimento
-        originalPosition = transform.localPosition;
-    }
-
-    private void OnGrabEnd(SelectExitEventArgs args)
-    {
-        SnapToGrid();
-    }
-
-    private void Update()
-    {
-        if (grabInteractable != null && grabInteractable.isSelected)
-        {
-            Vector3 currentPos = transform.localPosition;
-            // Vincola solo movimento su asse X
-            transform.localPosition = new Vector3(
-                currentPos.x,
-                originalPosition.y,
-                originalPosition.z
-            );
-        }
-    }
-
-    private void SnapToGrid()
-    {
-        Vector3 currentPos = transform.localPosition;
-        int nearestCol = Mathf.RoundToInt(currentPos.x / snapSpacing);
-        nearestCol = Mathf.Clamp(nearestCol, minColumn, maxColumn);
-
-        transform.localPosition = new Vector3(
-            nearestCol * snapSpacing,
-            originalPosition.y,
-            originalPosition.z
-        );
-    }
-
-    private void OnDestroy()
-    {
-        if (grabInteractable != null)
-        {
-            grabInteractable.selectEntered.RemoveListener(OnGrabStart);
-            grabInteractable.selectExited.RemoveListener(OnGrabEnd);
-        }
+        return isAffectedByColorDeficiency;
     }
 }

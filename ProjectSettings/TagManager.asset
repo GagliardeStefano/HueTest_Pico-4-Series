@@ -8,6 +8,7 @@ TagManager:
   - Canvas
   - FiltroButton
   - CanvasPreFilterOutput
+  - Camera0
   layers:
   - Default
   - TransparentFX

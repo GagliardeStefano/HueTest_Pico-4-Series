@@ -5705,6 +5705,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8393694aa2652384b963fd6bb3e7bb99, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  colorCsv: {fileID: 4900000, guid: 2b0568c5620205742b008d559b9caa10, type: 3}
+  standardRowLengths: 0b0000000a0000000b0000000b000000
   cubePrefab: {fileID: 4990268779269536951, guid: 76f934a9e394c9847bc322bc08c35b18, type: 3}
   spacing: 1.25
   yOffset: 0.01
