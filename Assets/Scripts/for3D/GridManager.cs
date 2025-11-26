@@ -148,7 +148,7 @@ public class GridManager : MonoBehaviour
             case 1:
                 // CASE 1: Griglia Custom (Invariata)
                 transform.position = new Vector3(-3.38f, 7.76f, -0.5f);
-                string[] tutorialColors = { "4-1", "4-4", "4-7", "4-10", "3-3", "3-6", "3-9" };
+                string[] tutorialColors = { "4-1", "4-3", "4-5", "4-6", "4-8", "4-10", "1-1" };
                 GenerateCustomGrid(1, tutorialColors);
                 TextProgressPage.text = "1/2";
                 break;
@@ -161,7 +161,7 @@ public class GridManager : MonoBehaviour
                 // Aspetta, R3 è 11 o 10? 
                 // CSV: R1(11), R2(10), R3(11), R4(11). -> Sì.
                 // Quindi per il tutorial generiamo le prime due righe "dal basso": 11 e 11.
-                GenerateGrid(new int[] { 11, 11 }, 2);
+                GenerateGrid(new int[] { 11, 11 }, 1);
                 TextProgressPage.text = "2/2";
                 break;
 

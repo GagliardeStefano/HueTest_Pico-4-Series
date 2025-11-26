@@ -14,7 +14,10 @@ public class DirectTileMovement : MonoBehaviour
     // Riferimento al GridManager per ottenere il spacing e i limiti
     private Transform gridParent;
 
-    private readonly float minX = -4.25f, maxX = 4.50f; // Limiti per riga 
+    private readonly float minXThird = -4.25f, maxXThird = 4.50f; // Limiti per terza riga 
+    private readonly float minXOther = -4.68f, maxXOther = 4.94f; // Limiti per le altre righe
+
+    private string rowTile;
 
     [Header("Movement Settings")]
     public float movementMultiplier = 50f; // Amplifica il movimento del controller
@@ -54,6 +57,7 @@ public class DirectTileMovement : MonoBehaviour
         startControllerWorldPosition = controllerTransform.position;
         Vector3 elevatedPosition = transform.localPosition + new Vector3(0, 1, 0);
 
+        rowTile = transform.name.Split("_")[0];
         
         Debug.Log($"Tassello {this.gameObject} Prima di assegnazione elevatedPosition: {this.transform.localPosition}");
         this.transform.localPosition = elevatedPosition;
@@ -87,8 +91,11 @@ public class DirectTileMovement : MonoBehaviour
             // Applica solo il movimento sull'asse X locale
             Vector3 newLocalPosition = startTileLocalPosition + new Vector3(amplifiedMovement.x, 0, 0);
 
-            // Limita il movimento all'interno della griglia
-            newLocalPosition.x = Mathf.Clamp(newLocalPosition.x, minX, maxX);
+            // Limita il movimento all'interno della terza riga
+            if (rowTile.Equals("Row3"))
+                newLocalPosition.x = Mathf.Clamp(newLocalPosition.x, minXThird, maxXThird);
+            else // Limita il movimento all'interno delle altre righe
+                newLocalPosition.x = Mathf.Clamp(newLocalPosition.x, minXOther, maxXOther);
 
             // Imposta la posizione locale
             transform.localPosition = newLocalPosition;
